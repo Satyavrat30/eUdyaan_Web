@@ -1,0 +1,262 @@
+:root {
+  --primary: #5f6f52;
+  --bg: #f6f8f3;
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+  --card: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-dark);
+}
+
+/* NAVBAR */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 60px;
+  background: #fbfaf7;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.logo img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.logo span {
+  letter-spacing: 0.5px;
+}
+
+
+nav a {
+  margin: 0 12px;
+  text-decoration: none;
+  color: var(--text-dark);
+}
+
+.auth .login {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.signup {
+  margin-left: 12px;
+  color: var(--text-muted);
+}
+
+/* HERO */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 60px;
+  background: #eaf2e3;
+}
+
+.hero-text {
+  max-width: 520px;
+}
+
+.hero-text h1 {
+  font-size: 42px;
+}
+
+.hero-text span {
+  color: var(--primary);
+}
+
+.hero-text p {
+  color: var(--text-muted);
+  margin: 16px 0;
+}
+
+.primary-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 22px;
+  cursor: pointer;
+}
+
+/* 🔥 HERO IMAGE FIX (IMPORTANT) */
+.hero-image {
+  max-width: 420px;
+}
+
+.hero-image img {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  object-fit: contain;
+}
+
+/* TESTS */
+.tests {
+  padding: 60px;
+}
+
+.test-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.test-card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 14px;
+  text-align: center;
+}
+
+/* TEST CARD */
+.test-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* TEST ICON IMAGE */
+.test-card img {
+  width: 170px;
+  height: 170px;
+  object-fit: contain;
+}
+
+
+/* TEST LABEL */
+.test-card span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+
+/* PROFESSIONALS */
+.professionals {
+  padding: 60px;
+  text-align: center;
+}
+
+.doctor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.doctor-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.doctor-card img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.doctor-card button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 20px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+/* DOCTOR CARD */
+.doctor-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* DOCTOR IMAGE */
+.doctor-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
+/* DOCTOR NAME */
+.doctor-card h4 {
+  margin: 8px 0 4px;
+  font-size: 16px;
+  color: #111827;
+}
+
+/* DOCTOR ROLE */
+.doctor-card span {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* BUTTON */
+.doctor-card button {
+  margin-top: 12px;
+  background: #5f6f52;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+
+/* RESPONSIVE SAFETY */
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-image {
+    margin-top: 30px;
+    max-width: 320px;
+  }
+
+  .test-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .doctor-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Book an Appointment</title>
+  <link rel="stylesheet" href="appointment.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">eUdyam</div>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="#">Resources</a>
+    <a href="#">Appointment</a>
+    <a href="#">Community</a>
+    <a href="#">About</a>
+    <a href="#">Contact</a>
+  </nav>
+</header>
+
+<main class="wrapper">
+
+  <h1>Book an Appointment</h1>
+  <p class="subtitle">
+    Schedule a session with one of our mental health professionals
+  </p>
+
+  <!-- STEP INDICATOR -->
+  <div class="steps">
+    <span class="active"></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <!-- STEP 1 -->
+  <section class="step active">
+    <h2>Choose your Therapist</h2>
+
+    <div class="doctor-grid">
+      <div class="doctor-card selectable">
+        <img src="https://i.pinimg.com/736x/2a/14/b2/2a14b296deb23f4c34fdb9c309286406.jpg" alt="">
+        <h4>Dr. Sarah Johnson</h4>
+        <p>Clinical Psychologist</p>
+      </div>
+
+      <div class="doctor-card selectable">
+      <img src="https://i.pinimg.com/736x/2a/14/b2/2a14b296deb23f4c34fdb9c309286406.jpg" alt="">
+        <h4>Dr. Sarah Johnson</h4>
+        <p>Clinical Psychologist</p>
+      </div>
+
+      <div class="doctor-card selectable">
+        <img src="https://i.pinimg.com/736x/2a/14/b2/2a14b296deb23f4c34fdb9c309286406.jpg" alt="">
+        <h4>Dr. Sarah Johnson</h4>
+        <p>Clinical Psychologist</p>
+      </div>
+    </div>
+
+    <button class="next">Continue</button>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step">
+    <h2>Select Date & Time</h2>
+
+    <div class="datetime">
+      <div class="calendar">
+        <div class="cal-header">
+          <button id="prevMonth">&lt;</button>
+          <span id="monthYear"></span>
+          <button id="nextMonth">&gt;</button>
+        </div>
+
+        <div class="days">
+          <span>Sun</span><span>Mon</span><span>Tue</span>
+          <span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+
+        <div class="dates" id="calendarDates"></div>
+      </div>
+
+      <div class="times">
+        <h4>Available Time</h4>
+       <button type="button" class="time selectable">10:00 AM</button>
+       <button type="button" class="time selectable">11:30 AM</button>
+       <button type="button" class="time selectable">02:00 PM</button>
+       <button type="button" class="time selectable">04:00 PM</button>
+
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="back">Back</button>
+      <button class="next">Continue</button>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step">
+    <h2>Choose Appointment Type</h2>
+
+    <div class="type-grid">
+      <div class="type-card selectable">
+        📹
+        <h4>Video Call</h4>
+        <p>Virtual consultation</p>
+      </div>
+
+      <div class="type-card selectable">
+        📍
+        <h4>In Person</h4>
+        <p>Visit at clinic</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="back">Back</button>
+      <button class="next">Continue</button>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="step">
+    <div class="confirm">
+      <div class="check">✔</div>
+      <h2>Appointment Confirmed</h2>
+      <p>Your appointment has been successfully scheduled.</p>
+      <button onclick="location.href='../index.html'">
+        Back to Home
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<script src="appointment.js"></script>
+</body>
+</html>

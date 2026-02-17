@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Community</title>
+  <link rel="stylesheet" href="community.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <div class="logo">eUdyaan</div>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../appointment/appointment.html">Appointment</a>
+    <a class="active">Community</a>
+  </nav>
+</header>
+
+<!-- MAIN -->
+<main class="container">
+
+  <!-- POSTS FEED -->
+  <section id="postsView">
+
+    <div class="header">
+      <div>
+        <h2>Community</h2>
+        <p>Share your thoughts in a safe space</p>
+      </div>
+      <button id="newPostBtn">+ New Post</button>
+    </div>
+
+    <!-- NEW POST -->
+    <div id="newPostBox" class="hidden new-post">
+      <textarea id="postInput" placeholder="Share what's on your mind..."></textarea>
+      <div class="actions">
+        <button id="cancelPost">Cancel</button>
+        <button id="submitPost">Post</button>
+      </div>
+    </div>
+
+    <!-- POSTS -->
+    <div id="postsContainer">
+      <div class="post" onclick="openPost(this)">
+        <small>Anonymous • 2 hours ago</small>
+        <p>Lorem ipsum dolor sit amet consectetur.</p>
+        <div class="meta">♡ 24 · 💬 2</div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- COMMENTS PANEL -->
+<aside id="commentsPanel" class="comments hidden">
+  <span class="back" onclick="closeComments()">← Back to posts</span>
+
+  <p id="activePostText"></p>
+
+  <div id="commentList">
+    <div class="comment">Nice post 👍</div>
+  </div>
+
+  <div class="comment-box">
+    <input id="commentInput" placeholder="Write a supportive reply...">
+    <button id="sendComment">➤</button>
+  </div>
+</aside>
+
+<script src="community.js"></script>
+</body>
+</html>
