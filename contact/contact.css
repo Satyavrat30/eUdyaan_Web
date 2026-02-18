@@ -22,6 +22,27 @@ body {
   padding: 16px 60px;
 }
 
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.logo img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+nav {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
 nav a {
   margin: 0 12px;
   text-decoration: none;
@@ -32,17 +53,19 @@ nav .active {
   font-weight: bold;
 }
 
+.auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .auth .login {
   background: var(--primary);
   color: white;
   border: none;
   padding: 8px 18px;
   border-radius: 20px;
-  margin-right: 12px;
-}
-
-.auth .signup {
-  color: var(--text-muted);
+  cursor: pointer;
 }
 
 /* HERO */

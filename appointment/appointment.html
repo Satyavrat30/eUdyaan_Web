@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -8,15 +8,19 @@
 <body>
 
 <header class="topbar">
-  <div class="logo">eUdyam</div>
+  <div class="logo"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</div>
   <nav>
     <a href="../index.html">Home</a>
-    <a href="#">Resources</a>
-    <a href="#">Appointment</a>
-    <a href="#">Community</a>
-    <a href="#">About</a>
-    <a href="#">Contact</a>
+    <a href="../resources/resources.html">Resources</a>
+    <a class="active" href="../appointment/appointment.html">Appointment</a>
+    <a href="../community/community.html">Community</a>
+    <a href="../about/about.html">About us</a>
+    <a href="../contact/contact.html">Contact us</a>
   </nav>
+  <div class="auth">
+    <a href="../login.html"><button class="login">login</button></a>
+    <a href="../signup.html"><button class="login">Sign up</button></a>
+  </div>
 </header>
 
 <main class="wrapper">
@@ -103,13 +107,13 @@
 
     <div class="type-grid">
       <div class="type-card selectable">
-        📹
+        ðŸ“¹
         <h4>Video Call</h4>
         <p>Virtual consultation</p>
       </div>
 
       <div class="type-card selectable">
-        📍
+        ðŸ“
         <h4>In Person</h4>
         <p>Visit at clinic</p>
       </div>
@@ -124,7 +128,7 @@
   <!-- STEP 4 -->
   <section class="step">
     <div class="confirm">
-      <div class="check">✔</div>
+      <div class="check">âœ”</div>
       <h2>Appointment Confirmed</h2>
       <p>Your appointment has been successfully scheduled.</p>
       <button onclick="location.href='../index.html'">
