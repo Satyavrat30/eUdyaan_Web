@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us</title>
+  <link rel="stylesheet" href="contact.css">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="logo"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</div>
+
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../resources/resources.html">Resources</a>
+    <a href="../appointment/appointment.html">Appointment</a>
+    <a href="../community/community.html">Community</a>
+    <a href="../about/about.html">About us</a>
+    <a class="active">Contact us</a>
+  </nav>
+
+  <div class="auth">
+    <a href="../login.html"><button class="login">login</button></a>
+    <a href="../signup.html"><button class="login">Sign up</button></a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>We'd Love to Hear From You</h1>
+  <p>
+    Have questions, suggestions, or just want to say hello?
+    We're here to help and always happy to connect.
+  </p>
+</section>
+
+<section class="form-wrapper">
+  <form id="contactForm" class="contact-form">
+    <div class="row">
+      <div class="field">
+        <label for="firstName">First Name</label>
+        <input id="firstName" type="text" placeholder="Your first name" required>
+      </div>
+
+      <div class="field">
+        <label for="lastName">Last Name</label>
+        <input id="lastName" type="text" placeholder="Your last name" required>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="email@domain.com" required>
+      </div>
+
+      <div class="field">
+        <label for="phone">Phone</label>
+        <input id="phone" type="text" placeholder="+21 228xxx">
+      </div>
+    </div>
+
+    <div class="field full">
+      <label for="message">Message</label>
+      <textarea id="message" placeholder="Your message" required></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn">Send message</button>
+    <p id="contactMessage" class="status"></p>
+  </form>
+</section>
+
+<script src="../session.js"></script>
+<script src="contact.js"></script>
+</body>
+</html>

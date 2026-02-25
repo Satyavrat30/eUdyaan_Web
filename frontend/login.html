@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" href="auth.css">
+</head>
+<body>
+
+<div class="auth-container">
+  <div class="auth-card">
+    <a class="back-btn" href="index.html">Back to Home</a>
+
+    <div class="field">
+      <label>Email</label>
+      <input id="loginEmail" type="text" placeholder="email@domain.com">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="password-box">
+        <input id="loginPassword" type="password" placeholder=".....">
+        <span class="eye">Show</span>
+      </div>
+    </div>
+
+    <button id="loginBtn" class="btn">Login</button>
+    <p id="authMessage" class="forgot"></p>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+</body>
+</html>

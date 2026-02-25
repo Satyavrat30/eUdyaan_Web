@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community</title>
+  <link rel="stylesheet" href="community.css">
+</head>
+<body>
+<header class="navbar">
+  <div class="logo"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</div>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../resources/resources.html">Resources</a>
+    <a href="../appointment/appointment.html">Appointment</a>
+    <a class="active">Community</a>
+    <a href="../about/about.html">About us</a>
+    <a href="../contact/contact.html">Contact us</a>
+  </nav>
+  <div class="auth">
+    <a href="../login.html"><button class="login">login</button></a>
+    <a href="../signup.html"><button class="login">Sign up</button></a>
+  </div>
+</header>
+
+<main class="community-layout">
+  <section class="feed-column" aria-label="Community feed">
+    <div class="feed-head">
+      <h1>Community Feed</h1>
+      <p>Share thoughts safely. You are always shown as anonymous.</p>
+    </div>
+
+    <section class="create-box" aria-label="Create post section">
+      <button id="createPrompt" class="create-prompt" type="button" aria-expanded="false">Start a post...</button>
+      <form id="createForm" class="create-form hidden" novalidate>
+        <label for="postTitle">Title</label>
+        <input id="postTitle" type="text" maxlength="90" placeholder="Give your post a short title" required>
+
+        <label for="postContent">Content</label>
+        <textarea id="postContent" maxlength="1200" placeholder="Share your thoughts in 2-4 short paragraphs" required></textarea>
+
+        <div class="create-grid">
+          <div>
+            <label for="postTags">Tags (comma separated)</label>
+            <input id="postTags" type="text" placeholder="anxiety, exam, sleep">
+          </div>
+          <div>
+            <label for="postMedia">Optional media</label>
+            <input id="postMedia" type="file" accept="image/*,video/*">
+          </div>
+        </div>
+
+        <div class="create-actions">
+          <button id="cancelCreate" type="button" class="ghost-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Post</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="feed-controls" aria-label="Sort and filters">
+      <div class="sort-tabs" role="tablist" aria-label="Sort posts">
+        <button class="sort-tab active" data-sort="recent" type="button" role="tab" aria-selected="true">Most Recent</button>
+        <button class="sort-tab" data-sort="popular" type="button" role="tab" aria-selected="false">Most Popular</button>
+        <button class="sort-tab" data-sort="replied" type="button" role="tab" aria-selected="false">Most Replied</button>
+      </div>
+
+      <div class="filter-row">
+        <label class="sr-only" for="sortSelect">Sort</label>
+        <select id="sortSelect">
+          <option value="recent">Sort: Most Recent</option>
+          <option value="popular">Sort: Most Popular</option>
+          <option value="replied">Sort: Most Replied</option>
+        </select>
+
+        <label class="sr-only" for="categoryFilter">Category</label>
+        <select id="categoryFilter">
+          <option value="all">Category: All</option>
+          <option value="anxiety">Anxiety</option>
+          <option value="depression">Depression</option>
+          <option value="relationship">Relationship</option>
+          <option value="academics">Academics</option>
+          <option value="sleep">Sleep</option>
+        </select>
+
+        <label class="sr-only" for="dateFilter">Date range</label>
+        <select id="dateFilter">
+          <option value="all">Date: All time</option>
+          <option value="1">Last 24 hours</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+        </select>
+
+        <label class="sr-only" for="tagFilter">Tag</label>
+        <select id="tagFilter">
+          <option value="all">Tag: All</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="postsContainer" class="post-feed" aria-live="polite"></section>
+  </section>
+
+  <aside class="side-column" aria-label="Community insights">
+    <section class="side-card">
+      <h3>Trending Topics</h3>
+      <ul id="trendingList"></ul>
+    </section>
+    <section class="side-card">
+      <h3>Community Guidelines</h3>
+      <p>Be kind, avoid personal attacks, and do not share personal contact details in posts.</p>
+      <p>Use anonymous posting to discuss mental wellness safely.</p>
+    </section>
+  </aside>
+</main>
+
+<div id="drawerBackdrop" class="drawer-backdrop hidden" tabindex="-1" aria-hidden="true"></div>
+<aside id="postDrawer" class="post-drawer" aria-label="Post discussion" aria-hidden="true">
+  <header class="drawer-head">
+    <div>
+      <h2 id="drawerTitle">Post</h2>
+      <p id="drawerMeta"></p>
+    </div>
+    <button id="closeDrawer" class="drawer-close" type="button" aria-label="Close discussion">X</button>
+  </header>
+
+  <article class="drawer-content">
+    <p id="drawerBody"></p>
+    <div class="drawer-stats" id="drawerStats"></div>
+  </article>
+
+  <section class="thread-section" aria-label="Threaded replies">
+    <div class="thread-head">
+      <h3>Replies</h3>
+      <span id="replyCountBadge">0</span>
+    </div>
+    <div id="threadContainer" class="thread-container"></div>
+  </section>
+
+  <form id="replyForm" class="reply-form">
+    <p id="replyContext" class="reply-context hidden"></p>
+    <textarea id="replyInput" placeholder="Write a supportive reply..." maxlength="600" required></textarea>
+    <div class="reply-actions">
+      <button id="cancelReplyTarget" type="button" class="ghost-btn hidden">Cancel Reply Target</button>
+      <button type="submit" class="primary-btn">Reply</button>
+    </div>
+  </form>
+</aside>
+
+<script src="../session.js"></script>
+<script src="community.js"></script>
+</body>
+</html>
