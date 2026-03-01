@@ -1,99 +1,98 @@
+# eUdyaan Web
 
-# eUdyaan Web – Branch Change Summary
+eUdyaan is a student-focused mental wellness platform with resources, AI support, appointments, community discussions, and account authentication.
 
-This README summarizes the work done in branch `feature/community-post-fixes`.
+## What’s included
 
-## 1) Community section improvements
+- Authentication (signup, login, forgot/reset password, email verification flow)
+- Resources section with cards and AI support chat
+- Community posts and threaded replies
+- Reddit-style voting (upvote/downvote/toggle)
+- Contact and appointment pages
 
-- Added visible required indicators in the post composer.
-- Enforced mandatory fields for post creation: title, content, and tags.
-- Improved validation behavior so users are focused to the first missing field.
-- Updated reply input behavior:
-  - `Enter` submits the reply
-  - `Shift + Enter` creates a new line
-- Added backend-level checks to reject post creation when required fields are missing.
-- Added schema-level validation to require at least one tag.
+## Recent major updates
 
-## 2) Login and authentication updates
+### Community
 
-- Upgraded signup flow with stronger password policy validation (minimum length, uppercase, lowercase, numeric, special character).
-- Added secure password hashing before account creation and password reset.
-- Introduced email verification flow for signup using token-based verification links.
-- Added login gating for unverified accounts (when email verification is configured).
-- Improved login responses and UX messages for:
-  - unregistered email
-  - incorrect password
-  - successful login state
-- Added "forgot password" flow that sends password reset links.
-- Added token-based password reset flow with password strength checks.
-- Added frontend password strength meter and real-time strength labels.
-- Added confirm-password validation in signup/reset flows.
-- Updated login/signup UI for better usability (clear labels, visibility toggle, navigation links, forgot password access).
-- Added verified-account success handling on login screen after email confirmation.
+- Required field guidance and validation for post creation (`title`, `content`, `tags`)
+- Reply UX: `Enter` submits, `Shift+Enter` inserts newline
+- Server-side identity resolution for anonymous posting (don’t trust raw client identity)
+- Guest fallback identity support
+- XSS hardening in feed/thread rendering
+- Post/reply write rate limiting
+- Voting upgraded to Reddit-style behavior:
+  - Upvote and downvote arrows
+  - Toggle off by clicking the same vote again
+  - Switching up ↔ down adjusts score accordingly
+  - One vote per user per post enforced backend-side
+  - New posts start with score `1` (author default upvote)
 
-## 3) AI support prompt update
+### AI support
 
-- Updated the support assistant behavior to align with Indian student context and local crisis guidance.
+- Added API rate limiting and overload protection
+- Improved upstream quota-limit handling (friendly 429 flow)
+- Prompt/system behavior tuned for Indian student context and crisis guidance
 
-## 4) Notes
+### Homepage + navigation
 
-- The branch currently contains both committed updates and additional in-progress auth/login updates.
-- Dependency/vendor directory changes are present locally; keep commits focused on application source and lockfiles.
+- Fixed CTA destinations (Get Started, Book Appointment, Home links)
+- `eUdyaan` logo is clickable to Home across pages
+- Removed unintended underline styling on logo links
 
-## 5) Auth setup notes (Gmail + bcrypt)
+### Resources robustness
 
-- Authentication/email flow is configured to use Gmail SMTP with these env keys:
-  - `EMAIL_SERVICE=gmail`
-  - `EMAIL_USER=...`
-  - `EMAIL_PASS=...` (16-char Google App Password)
-  - `FRONTEND_URL=http://localhost:5000`
-  - `ADMIN_KEY=...` (long random secret)
-- Password security uses bcrypt hashing for signup and password reset.
-- Required auth dependencies are installed/used: `bcryptjs` and `nodemailer`.
+- Safer API base handling for file/backend contexts
+- Escaping/sanitization for dynamic rendering and embeds
+- Better resilience for invalid state and report parsing
 
-## 6) Gmail App Password requirements
+## Tech stack
 
-- Sign in to `myaccount.google.com`.
-- Enable **2-Step Verification** in Security settings.
-- Open **App Passwords**, create one for Mail, and copy the generated 16-character password.
-- Paste that value into `EMAIL_PASS`.
+- Frontend: HTML, CSS, Vanilla JS
+- Backend: Node.js, Express, Mongoose
+- Database: MongoDB
 
-## 7) Existing users note
+## Setup
 
-- Older users stored with plain-text passwords will not authenticate after bcrypt-based login is enabled.
-- Testing approach: clear existing users and re-register accounts.
-- Production approach: run a one-time migration to hash existing passwords.
+### 1) Install backend dependencies
 
-## 8) Anonymous admin lookup usage
+```bash
+npm install --prefix backend
+```
 
-- Use your configured `ADMIN_KEY` to resolve anonymous post IDs in admin lookup requests.
-- Example pattern:
-  - `GET /api/auth/admin/lookup-anonymous?anonymousId=ANON-123456&adminKey=YOUR_ADMIN_KEY`
+### 2) Configure environment
 
-## 9) AI Support Assistant (upgraded behavior)
+Create/update `backend/.env` with required keys:
 
-- AI support flow was enhanced from a basic single-response chat to a richer support pipeline.
-- The assistant context is aligned to Indian student realities (exam pressure, placement anxiety, family expectations, hostel life).
-- Crisis handling is stronger with Indian emergency and helpline guidance in high-risk situations.
-- Emotion-aware response behavior was introduced so replies better match user mood and urgency.
-- Multilingual/Hinglish-friendly handling was considered in support-chat behavior.
+```env
+MONGO_URI=...
+PORT=5000
+GROQ_API_KEY=...
+GROQ_MODEL=llama-3.1-8b-instant
 
-## 10) How to run the project
+# Optional email/auth settings
+EMAIL_SERVICE=gmail
+EMAIL_USER=...
+EMAIL_PASS=...
+FRONTEND_URL=http://localhost:5000
+ADMIN_KEY=...
+```
 
-- Start MongoDB (local service) or ensure your Atlas URI is valid.
-- Set required backend env values (`MONGO_URI`, `GROQ_API_KEY`, `PORT`, plus optional email keys).
-- Install backend dependencies and run the backend server.
-- Open the app through backend host URL (`http://localhost:5000`) instead of opening HTML directly.
+### 3) Run
 
-## 11) Common setup issues + fixes
+From project root:
 
-- **Mongo env syntax error in code**: keep DB URI in env as `MONGO_URI`, never paste raw URI into JavaScript conditionals.
-- **Gmail 535 login failures**: use Google App Password (16-char), not your normal Gmail password.
-- **If App Password is unavailable**: temporarily disable email verification by removing/commenting email env keys for local development.
-- **If old values keep loading**: stop server fully, reopen terminal, restart backend so new env values are picked up.
+```bash
+npm start
+```
 
-## 12) Security and ops reminders
+Open:
 
-- Keep secrets only in env files; never commit real keys/passwords to source control.
-- Rotate credentials immediately if they were exposed accidentally.
-- Use migration strategy for legacy plain-text passwords before production rollout.
+```text
+http://localhost:5000
+```
+
+## Notes
+
+- Keep secrets only in `.env` files; never commit real keys.
+- If dependencies are missing, run `npm install --prefix backend` again.
+- If server doesn’t pick up latest route changes, restart backend.

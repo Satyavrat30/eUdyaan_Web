@@ -24,6 +24,9 @@ const drawerTitle = document.getElementById("drawerTitle");
 const drawerMeta = document.getElementById("drawerMeta");
 const drawerBody = document.getElementById("drawerBody");
 const drawerStats = document.getElementById("drawerStats");
+const voteUpBtn = document.getElementById("voteUpBtn");
+const voteDownBtn = document.getElementById("voteDownBtn");
+const voteScore = document.getElementById("voteScore");
 const threadContainer = document.getElementById("threadContainer");
 const replyCountBadge = document.getElementById("replyCountBadge");
 
@@ -39,7 +42,8 @@ const API_BASE = (window.location.port === "5000" || window.location.protocol ==
   : `http://${backendHost}:5000`;
 
 const profile = window.EudyaanSession?.getProfile?.() || null;
-let currentAnonymousId = profile?.anonymousId || "";
+const currentUserId = profile?.id || "";
+const fallbackAnonymousId = profile?.anonymousId || getGuestAnonymousId();
 
 // If user is logged in, anonymousId is derived from their userId (deterministic, reversible by admin)
 // If not logged in, use a guest anonymous ID stored in localStorage
@@ -51,8 +55,13 @@ function getGuestAnonymousId() {
   return generated;
 }
 
-if (!currentAnonymousId) {
-  currentAnonymousId = getGuestAnonymousId();
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 let posts = [];
@@ -102,7 +111,8 @@ function updateTagFilterOptions() {
   const previous = tagFilter.value;
   const options = ["<option value=\"all\">Tag: All</option>"];
   Array.from(tags).sort().forEach((tag) => {
-    options.push(`<option value=\"${tag}\">Tag: ${tag}</option>`);
+    const safeTag = escapeHtml(tag);
+    options.push(`<option value="${safeTag}">Tag: ${safeTag}</option>`);
   });
   tagFilter.innerHTML = options.join("");
   if (Array.from(tagFilter.options).some((opt) => opt.value === previous)) {
@@ -124,7 +134,7 @@ function renderTrending() {
     .slice(0, 6);
 
   trendingList.innerHTML = top.length
-    ? top.map(([tag, count]) => `<li>#${tag} <strong>(${count})</strong></li>`).join("")
+     ? top.map(([tag, count]) => `<li>#${escapeHtml(tag)} <strong>(${count})</strong></li>`).join("")
     : "<li>No trending topics yet.</li>";
 }
 
@@ -139,21 +149,23 @@ function renderFeed() {
 
   postsContainer.innerHTML = posts
     .map((post) => {
-      const preview = post.content.length > 220 ? `${post.content.slice(0, 220)}...` : post.content;
-      const tags = (post.tags || []).map((tag) => `<span class=\"post-tag\">#${tag}</span>`).join("");
+        const postTitle = escapeHtml(post.title);
+        const postContent = String(post.content || "");
+        const preview = postContent.length > 220 ? `${postContent.slice(0, 220)}...` : postContent;
+        const tags = (post.tags || []).map((tag) => `<span class="post-tag">#${escapeHtml(tag)}</span>`).join("");
       const replies = Number(post.replyCount ?? countReplies(post.replies || []));
       return `
-      <button class=\"post-card\" data-post-id=\"${post.id}\" type=\"button\" aria-label=\"Open discussion for ${post.title}\">
+        <button class="post-card" data-post-id="${escapeHtml(post.id)}" type="button" aria-label="Open discussion for ${postTitle}">
         <div class=\"post-head\">
-          <span>${post.anonymousId}</span>
+            <span>Anonymous</span>
           <span>${formatRelativeTime(post.createdAt)}</span>
         </div>
-        <h3 class=\"post-title\">${post.title}</h3>
-        <p class=\"post-preview\">${preview}</p>
+          <h3 class="post-title">${postTitle}</h3>
+          <p class="post-preview">${escapeHtml(preview)}</p>
         <div class=\"post-tags\">${tags}</div>
         <div class=\"post-meta\">
           <span>Replies: ${replies}</span>
-          <span>Likes: ${post.likes || 0}</span>
+          <span>Votes: ${post.likes || 0}</span>
         </div>
       </button>`;
     })
@@ -182,11 +194,11 @@ function renderThread(list, depth = 0) {
       const children = childCount && !isCollapsed ? renderThread(reply.replies, depth + 1) : "";
       return `
       <div class=\"thread-item\" style=\"--depth:${depth}\">
-        <div class=\"reply-meta\">${reply.anonymousId} • ${formatRelativeTime(reply.createdAt)}</div>
-        <div class=\"reply-body\">${reply.content}</div>
+          <div class="reply-meta">Anonymous • ${formatRelativeTime(reply.createdAt)}</div>
+          <div class="reply-body">${escapeHtml(reply.content)}</div>
         <div class=\"reply-tools\">
-          <button type=\"button\" data-reply-action=\"reply\" data-reply-id=\"${replyId}\">Reply</button>
-          ${childCount ? `<button type=\"button\" data-reply-action=\"toggle\" data-reply-id=\"${replyId}\">${isCollapsed ? "Expand" : "Collapse"} (${childCount})</button>` : ""}
+            <button type="button" data-reply-action="reply" data-reply-id="${escapeHtml(replyId)}">Reply</button>
+            ${childCount ? `<button type="button" data-reply-action="toggle" data-reply-id="${escapeHtml(replyId)}">${isCollapsed ? "Expand" : "Collapse"} (${childCount})</button>` : ""}
         </div>
         ${children}
       </div>`;
@@ -211,7 +223,7 @@ function setReplyContextLabel(post) {
 
   replyContext.classList.remove("hidden");
   cancelReplyTarget.classList.remove("hidden");
-  replyContext.textContent = `Replying to ${target.anonymousId}`;
+  replyContext.textContent = "Replying to Anonymous";
 }
 
 function openDrawer(postId) {
@@ -220,9 +232,13 @@ function openDrawer(postId) {
 
   activePostId = postId;
   drawerTitle.textContent = post.title;
-  drawerMeta.textContent = `${post.anonymousId} • ${formatRelativeTime(post.createdAt)}`;
+  drawerMeta.textContent = `Anonymous • ${formatRelativeTime(post.createdAt)}`;
   drawerBody.textContent = post.content;
-  drawerStats.textContent = `Replies: ${post.replyCount ?? countReplies(post.replies || [])} • Likes: ${post.likes || 0}`;
+  drawerStats.textContent = `Replies: ${post.replyCount ?? countReplies(post.replies || [])} • Votes: ${post.likes || 0}`;
+  if (voteScore) voteScore.textContent = String(post.likes || 0);
+  const currentVote = Number(post.userVote || 0);
+  voteUpBtn?.classList.toggle("active-up", currentVote === 1);
+  voteDownBtn?.classList.toggle("active-down", currentVote === -1);
   replyCountBadge.textContent = String(post.replyCount ?? countReplies(post.replies || []));
 
   threadContainer.innerHTML = renderThread(post.replies || []);
@@ -251,6 +267,42 @@ function closeDrawer() {
 
   if (window.location.hash.startsWith("#post-")) {
     history.pushState(null, "", window.location.pathname + window.location.search);
+  }
+}
+
+async function voteOnActivePost(direction) {
+  if (!activePostId) return;
+
+  try {
+    const payload = {
+      userId: currentUserId,
+      anonymousId: fallbackAnonymousId,
+      direction
+    };
+
+    const data = await fetchJson(`${API_BASE}/api/community/posts/${activePostId}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const upvotes = Number(data?.upvotes ?? data?.likes ?? 0);
+    const userVote = Number(data?.userVote ?? 0);
+    posts = posts.map((post) => (
+      post.id === activePostId ? { ...post, likes: upvotes, userVote } : post
+    ));
+
+    renderFeed();
+    const active = findPost(activePostId);
+    if (active) {
+      drawerStats.textContent = `Replies: ${active.replyCount ?? countReplies(active.replies || [])} • Votes: ${active.likes || 0}`;
+      if (voteScore) voteScore.textContent = String(active.likes || 0);
+      const currentVote = Number(active.userVote || 0);
+      voteUpBtn?.classList.toggle("active-up", currentVote === 1);
+      voteDownBtn?.classList.toggle("active-down", currentVote === -1);
+    }
+  } catch (error) {
+    alert(`Failed to vote post: ${error.message}`);
   }
 }
 
@@ -284,7 +336,9 @@ async function loadPosts() {
       sort: activeSort,
       category: categoryFilter.value,
       days: dateFilter.value,
-      tag: tagFilter.value
+      tag: tagFilter.value,
+      userId: currentUserId,
+      anonymousId: fallbackAnonymousId
     });
     const data = await fetchJson(`${API_BASE}/api/community/posts?${query.toString()}`);
     posts = data.posts || [];
@@ -293,7 +347,7 @@ async function loadPosts() {
       openDrawer(activePostId);
     }
   } catch (error) {
-    postsContainer.innerHTML = `<div class=\"post-card\"><p>Unable to load posts: ${error.message}</p></div>`;
+    postsContainer.innerHTML = `<div class=\"post-card\"><p>Unable to load posts: ${escapeHtml(error.message)}</p></div>`;
   }
 }
 
@@ -328,7 +382,8 @@ createForm.addEventListener("submit", async (event) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        anonymousId: currentAnonymousId,
+        userId: currentUserId,
+        anonymousId: fallbackAnonymousId,
         title,
         content,
         tags,
@@ -402,7 +457,8 @@ replyForm.addEventListener("submit", async (event) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        anonymousId: currentAnonymousId,
+        userId: currentUserId,
+        anonymousId: fallbackAnonymousId,
         content,
         parentReplyId: replyTargetId
       })
@@ -429,6 +485,8 @@ cancelReplyTarget.addEventListener("click", () => {
 
 closeDrawerBtn.addEventListener("click", closeDrawer);
 drawerBackdrop.addEventListener("click", closeDrawer);
+voteUpBtn?.addEventListener("click", () => voteOnActivePost("up"));
+voteDownBtn?.addEventListener("click", () => voteOnActivePost("down"));
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && postDrawer.classList.contains("open")) {

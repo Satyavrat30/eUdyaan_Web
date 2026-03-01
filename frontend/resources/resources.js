@@ -172,7 +172,31 @@ const clearChatBtn = document.getElementById("clear-chat-btn");
 const reportView = document.getElementById("report-view");
 
 const backendHost = window.location.hostname || "localhost";
-const API_BASE = window.location.port === "5000" ? "" : `http://${backendHost}:5000`;
+const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:")
+  ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
+  : `http://${backendHost}:5000`;
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function sanitizeEmbedUrl(url) {
+  try {
+    const parsed = new URL(String(url || ""));
+    const allowedHosts = new Set(["www.youtube.com", "youtube.com", "www.youtube-nocookie.com", "youtube-nocookie.com"]);
+    if (parsed.protocol !== "https:" || !allowedHosts.has(parsed.hostname) || !parsed.pathname.startsWith("/embed/")) {
+      return "";
+    }
+    return parsed.toString();
+  } catch {
+    return "";
+  }
+}
 
 const MOOD_PATTERNS = {
   happy: ["happy", "good", "fine", "better", "calm"],
@@ -242,10 +266,10 @@ function renderCards(list, container, badgeClass) {
     .map((item, index) => {
       return `
       <div class="card">
-        <span class="badge ${badgeClass}">${item.badge}</span>
-        <span class="time">${item.time}</span>
-        <h3>${item.title}</h3>
-        <button type="button" data-group="${container.id}" data-index="${index}">-> ${item.action}</button>
+        <span class="badge ${escapeHtml(badgeClass)}">${escapeHtml(item.badge)}</span>
+        <span class="time">${escapeHtml(item.time)}</span>
+        <h3>${escapeHtml(item.title)}</h3>
+        <button type="button" data-group="${escapeHtml(container.id)}" data-index="${index}">-> ${escapeHtml(item.action)}</button>
       </div>`;
     })
     .join("");
@@ -258,16 +282,22 @@ function getItemBySource(groupId, index) {
     "audio-cards": RESOURCE_DATA.audios
   };
 
-  return map[groupId][index];
+  const source = map[groupId];
+  if (!source || index < 0 || index >= source.length) return null;
+  return source[index];
 }
 
 function openResource(item) {
+  if (!item) return;
   modalTitle.textContent = item.title;
 
   if (item.embedUrl) {
-    modalContent.innerHTML = `<iframe class="embed-frame" src="${item.embedUrl}" allowfullscreen></iframe>`;
+    const embedUrl = sanitizeEmbedUrl(item.embedUrl);
+    modalContent.innerHTML = embedUrl
+      ? `<iframe class="embed-frame" src="${embedUrl}" allowfullscreen></iframe>`
+      : `<p class="resource-text">Video is unavailable right now.</p>`;
   } else {
-    modalContent.innerHTML = `<p class="resource-text">${item.content || "Content will be added soon."}</p>`;
+    modalContent.innerHTML = `<p class="resource-text">${escapeHtml(item.content || "Content will be added soon.")}</p>`;
   }
 
   modal.classList.remove("hidden");
@@ -530,6 +560,11 @@ async function handleUserMessage(message) {
     saveReportSnapshot();
   } catch (error) {
     const text = String(error.message || "");
+    if (text.includes("Too many requests")) {
+      appendMessage("ai", "You are sending requests too fast. Please wait a moment and try again.");
+    } else if (text.includes("Server is busy")) {
+      appendMessage("ai", "Server is currently busy. Please try again in a minute.");
+    } else
     if (text.includes("Cannot reach backend")) {
       appendMessage("ai", "I cannot connect to server. Start backend: cd backend && npm start");
     } else if (text.includes("GROQ_API_KEY")) {
@@ -586,10 +621,14 @@ clearChatBtn.addEventListener("click", clearSession);
 if (window.location.hash === "#report") {
   const existingReport = localStorage.getItem(WELLNESS_REPORT_KEY);
   if (existingReport) {
-    reportView.classList.remove("hidden");
-    const parsed = JSON.parse(existingReport);
-    reportView.textContent = formatReportText(parsed);
-    reportView.classList.toggle("report-critical", parsed.seriousCount > 0);
+    try {
+      reportView.classList.remove("hidden");
+      const parsed = JSON.parse(existingReport);
+      reportView.textContent = formatReportText(parsed);
+      reportView.classList.toggle("report-critical", parsed.seriousCount > 0);
+    } catch {
+      showReport();
+    }
   } else {
     showReport();
   }

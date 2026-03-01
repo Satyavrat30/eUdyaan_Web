@@ -24,7 +24,9 @@ const communityPostSchema = new mongoose.Schema(
       }
     },
     mediaName: { type: String, default: "" },
-    likes: { type: Number, default: 0, min: 0 }
+    likes: { type: Number, default: 0, min: 0 },
+    upvoterKeys: { type: [String], default: [] },
+    downvoterKeys: { type: [String], default: [] }
   },
   { timestamps: true }
 );

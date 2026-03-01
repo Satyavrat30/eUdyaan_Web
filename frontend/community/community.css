@@ -37,6 +37,7 @@ body {
   font-size: 22px;
   font-weight: 600;
   color: #1f2937;
+  text-decoration: none;
 }
 
 .logo img {
@@ -407,6 +408,49 @@ nav .active {
   margin-top: 10px;
   color: #64748b;
   font-size: 13px;
+}
+
+.drawer-actions {
+  margin-top: 10px;
+}
+
+.vote-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #f8fafc;
+}
+
+.vote-arrow {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 15px;
+  color: #475569;
+  line-height: 1;
+  padding: 4px;
+}
+
+.vote-arrow:hover {
+  color: #1f2937;
+}
+
+.vote-arrow.active-up {
+  color: #ea580c;
+}
+
+.vote-arrow.active-down {
+  color: #2563eb;
+}
+
+.vote-score {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .thread-section {

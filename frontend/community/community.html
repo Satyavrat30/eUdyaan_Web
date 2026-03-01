@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="navbar">
-  <div class="logo"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</div>
+  <a class="logo" href="../index.html" aria-label="Go to home"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</a>
   <nav>
     <a href="../index.html">Home</a>
     <a href="../resources/resources.html">Resources</a>
@@ -126,6 +126,13 @@
   <article class="drawer-content">
     <p id="drawerBody"></p>
     <div class="drawer-stats" id="drawerStats"></div>
+    <div class="drawer-actions">
+      <div class="vote-controls" aria-label="Post vote controls">
+        <button id="voteUpBtn" type="button" class="vote-arrow" aria-label="Upvote">▲</button>
+        <span id="voteScore" class="vote-score">0</span>
+        <button id="voteDownBtn" type="button" class="vote-arrow" aria-label="Downvote">▼</button>
+      </div>
+    </div>
   </article>
 
   <section class="thread-section" aria-label="Threaded replies">

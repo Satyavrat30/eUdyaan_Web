@@ -6,6 +6,11 @@ const cors = require("cors");
 
 const app = express();
 const HELPLINE_NUMBER = process.env.HELPLINE_NUMBER || "iCall: 9152987821 (Mon–Sat, 8am–10pm IST) | Vandrevala Foundation: 1860-2662-345 (24x7)";
+const aiRateWindowMs = 60 * 1000;
+const aiRateMaxRequests = 10;
+const aiRateBuckets = new Map();
+const aiRateMaxKeys = 5000;
+let aiLastCleanupAt = 0;
 
 function hasSeriousRiskSignal(text) {
     if (!text || typeof text !== "string") return false;
@@ -26,6 +31,48 @@ function hasSeriousRiskSignal(text) {
     return patterns.some((pattern) => pattern.test(input));
 }
 
+function getClientIp(req) {
+    const forwarded = req.headers["x-forwarded-for"];
+    const ip = Array.isArray(forwarded)
+        ? forwarded[0]
+        : (typeof forwarded === "string" ? forwarded.split(",")[0] : req.ip);
+    return String(ip || "unknown").trim();
+}
+
+function aiSupportRateLimiter(req, res, next) {
+    const key = getClientIp(req);
+    const now = Date.now();
+
+    if (now - aiLastCleanupAt > aiRateWindowMs) {
+        aiLastCleanupAt = now;
+        for (const [bucketKey, bucket] of aiRateBuckets.entries()) {
+            if (now >= bucket.resetAt) {
+                aiRateBuckets.delete(bucketKey);
+            }
+        }
+    }
+
+    if (!aiRateBuckets.has(key) && aiRateBuckets.size >= aiRateMaxKeys) {
+        return res.status(503).json({ error: "Server is busy. Please try again in a moment." });
+    }
+
+    const current = aiRateBuckets.get(key);
+
+    if (!current || now >= current.resetAt) {
+        aiRateBuckets.set(key, { count: 1, resetAt: now + aiRateWindowMs });
+        return next();
+    }
+
+    current.count += 1;
+    if (current.count > aiRateMaxRequests) {
+        const retryAfterSeconds = Math.ceil((current.resetAt - now) / 1000);
+        res.setHeader("Retry-After", String(Math.max(retryAfterSeconds, 1)));
+        return res.status(429).json({ error: "Too many requests. Please wait and try again." });
+    }
+
+    return next();
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -38,7 +85,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/contact", contactRoutes);
 
-app.post("/api/ai/support", async (req, res) => {
+app.post("/api/ai/support", aiSupportRateLimiter, async (req, res) => {
     try {
         const groqApiKey = process.env.GROQ_API_KEY;
         if (!groqApiKey) {
@@ -84,14 +131,32 @@ app.post("/api/ai/support", async (req, res) => {
         if (!groqResponse.ok) {
             const raw = await groqResponse.text();
             let details = raw;
+            let parsedCode = "";
             try {
                 const parsed = JSON.parse(raw);
                 const msg = parsed?.error?.message || parsed?.message || raw;
                 const code = parsed?.error?.code ? ` (code: ${parsed.error.code})` : "";
+                parsedCode = String(parsed?.error?.code || "");
                 details = `${msg}${code}`;
             } catch (_) {
                 // Keep raw text when response is not JSON.
             }
+
+            const isUpstreamRateLimit = groqResponse.status === 429 ||
+                parsedCode === "rate_limit_exceeded" ||
+                /rate limit|too many requests|rate_limit_exceeded/i.test(details);
+
+            if (isUpstreamRateLimit) {
+                const waitMatch = details.match(/try again in\s*([0-9]+(?:\.[0-9]+)?)s/i);
+                const retryAfter = waitMatch ? Math.max(1, Math.ceil(Number(waitMatch[1]))) : 5;
+                res.setHeader("Retry-After", String(retryAfter));
+                return res.status(429).json({
+                    error: "Too many requests. Please wait a moment and try again.",
+                    details,
+                    status: 429
+                });
+            }
+
             return res.status(502).json({
                 error: "Groq request failed",
                 details,
