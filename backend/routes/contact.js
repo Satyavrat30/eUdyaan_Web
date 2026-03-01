@@ -1,9 +1,29 @@
 const express = require("express");
 const ContactMessage = require("../models/ContactMessage");
+const User = require("../models/User");
 
 const router = express.Router();
 
-router.post("/messages", async (req, res) => {
+async function requireAuthenticatedUser(req, res, next) {
+  try {
+    const userId = String(req.body?.userId || "").trim();
+    if (!/^[a-fA-F0-9]{24}$/.test(userId)) {
+      return res.status(401).json({ error: "Login required" });
+    }
+
+    const user = await User.findById(userId, { _id: 1 }).lean();
+    if (!user?._id) {
+      return res.status(401).json({ error: "Login required" });
+    }
+
+    req.authUserId = String(user._id);
+    return next();
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+router.post("/messages", requireAuthenticatedUser, async (req, res) => {
   try {
     const { firstName, lastName, email, phone = "", message } = req.body;
 

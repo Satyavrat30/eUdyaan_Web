@@ -12,7 +12,15 @@ function setStatus(text, isError = false) {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  const profile = window.EudyaanSession?.getProfile?.() || null;
+  if (!profile?.id) {
+    setStatus("Please login to send a message.", true);
+    window.EudyaanSession?.redirectToLogin?.();
+    return;
+  }
+
   const payload = {
+    userId: profile.id,
     firstName: document.getElementById("firstName").value.trim(),
     lastName: document.getElementById("lastName").value.trim(),
     email: document.getElementById("email").value.trim(),

@@ -2,6 +2,13 @@ const steps = document.querySelectorAll(".step");
 const indicators = document.querySelectorAll(".steps span");
 let currentStep = 0;
 
+function requireLoginForBooking() {
+  const profile = window.EudyaanSession?.getProfile?.() || null;
+  if (profile?.id) return true;
+  window.EudyaanSession?.redirectToLogin?.();
+  return false;
+}
+
 function showStep(index) {
   steps.forEach(s => s.classList.remove("active"));
   indicators.forEach(i => i.classList.remove("active"));
@@ -12,7 +19,29 @@ function showStep(index) {
 
 /* step navigation */
 document.querySelectorAll(".next").forEach(btn =>
-  btn.onclick = () => showStep(currentStep + 1)
+  btn.onclick = () => {
+    const targetStep = currentStep + 1;
+    const leavingTherapistStep = currentStep === 0 && targetStep === 1;
+    const enteringConfirmationStep = currentStep === 2 && targetStep === 3;
+
+    if (leavingTherapistStep) {
+      const selectedTherapist = document.querySelector(".doctor-grid .doctor-card.selected");
+      if (!selectedTherapist) {
+        alert("Please choose a therapist before continuing.");
+        return;
+      }
+
+      if (!requireLoginForBooking()) {
+        return;
+      }
+    }
+
+    if (enteringConfirmationStep && !requireLoginForBooking()) {
+      return;
+    }
+
+    showStep(targetStep);
+  }
 );
 
 document.querySelectorAll(".back").forEach(btn =>

@@ -32,6 +32,15 @@ function setMessage(text, isError = false) {
   messageEl.style.color = isError ? "#b91c1c" : "#166534";
 }
 
+function getSafeNextPath() {
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next") || "";
+  if (!next.startsWith("/") || next.startsWith("//")) {
+    return "index.html";
+  }
+  return next;
+}
+
 // Password strength checker
 function checkPasswordStrength(password) {
   const checks = {
@@ -137,7 +146,7 @@ if (loginBtn) {
       if (result.success) {
         saveLoggedInProfile(result.user || { email, name: email.split("@")[0] });
         setMessage("Login successful! Redirecting...");
-        setTimeout(() => { window.location.href = "index.html"; }, 800);
+        setTimeout(() => { window.location.href = getSafeNextPath(); }, 800);
       } else {
         if (result.notRegistered) {
           const msgEl = document.getElementById("authMessage");

@@ -203,6 +203,12 @@ nav a.active {
   margin: 40px 0;
 }
 
+.login-note {
+  margin: 10px auto 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
 .type-card {
   border: 1px solid #ccc;
   padding: 30px;

@@ -42,6 +42,31 @@ function getHomeLink() {
   return inSubdir ? "../index.html" : "./index.html";
 }
 
+function getLoginLink() {
+  const inSubdir = /\/(resources|community|appointment|about|contact)\//.test(window.location.pathname);
+  return inSubdir ? "../login.html" : "./login.html";
+}
+
+function getCurrentRelativePath() {
+  const path = `${window.location.pathname || "/"}${window.location.search || ""}${window.location.hash || ""}`;
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+function redirectToLogin() {
+  const loginLink = getLoginLink();
+  const next = encodeURIComponent(getCurrentRelativePath());
+  window.location.href = `${loginLink}?next=${next}`;
+}
+
+function requireLogin(options = {}) {
+  const profile = getProfile();
+  if (profile?.id) return profile;
+  if (options.redirect !== false) {
+    redirectToLogin();
+  }
+  return null;
+}
+
 function renderAuthArea() {
   const authEl = document.querySelector(".auth");
   if (!authEl) return;
@@ -165,5 +190,7 @@ injectStyles();
 renderAuthArea();
 
 window.EudyaanSession = {
-  getProfile
+  getProfile,
+  requireLogin,
+  redirectToLogin
 };

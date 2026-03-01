@@ -175,6 +175,14 @@ const backendHost = window.location.hostname || "localhost";
 const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:")
   ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
   : `http://${backendHost}:5000`;
+const profile = window.EudyaanSession?.getProfile?.() || null;
+const currentUserId = profile?.id || "";
+
+function requireLoginForFeature() {
+  if (currentUserId) return true;
+  window.EudyaanSession?.redirectToLogin?.();
+  return false;
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -510,7 +518,7 @@ async function askAi(message) {
     response = await fetch(`${API_BASE}/api/ai/support`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, history: state.history })
+      body: JSON.stringify({ userId: currentUserId, message, history: state.history })
     });
   } catch {
     throw new Error("Cannot reach backend server.");
@@ -602,23 +610,37 @@ modal.addEventListener("click", (event) => {
 
 assistantForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (!requireLoginForFeature()) return;
   const message = assistantInput.value.trim();
   assistantInput.value = "";
   await handleUserMessage(message);
 });
 
 moodQuick.addEventListener("click", async (event) => {
+  if (!requireLoginForFeature()) return;
   const button = event.target.closest("button[data-mood]");
   if (!button) return;
   const mood = button.getAttribute("data-mood");
   await handleUserMessage(`My mood is ${mood}.`);
 });
 
-reportBtn.addEventListener("click", showReport);
-downloadReportBtn.addEventListener("click", downloadReport);
-clearChatBtn.addEventListener("click", clearSession);
+reportBtn.addEventListener("click", () => {
+  if (!requireLoginForFeature()) return;
+  showReport();
+});
+downloadReportBtn.addEventListener("click", () => {
+  if (!requireLoginForFeature()) return;
+  downloadReport();
+});
+clearChatBtn.addEventListener("click", () => {
+  if (!requireLoginForFeature()) return;
+  clearSession();
+});
 
 if (window.location.hash === "#report") {
+  if (!requireLoginForFeature()) {
+    // Redirect triggered by session helper.
+  } else {
   const existingReport = localStorage.getItem(WELLNESS_REPORT_KEY);
   if (existingReport) {
     try {
@@ -631,6 +653,7 @@ if (window.location.hash === "#report") {
     }
   } else {
     showReport();
+  }
   }
 }
 

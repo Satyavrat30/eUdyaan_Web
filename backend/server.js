@@ -3,6 +3,7 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const User = require("./models/User");
 
 const app = express();
 const HELPLINE_NUMBER = process.env.HELPLINE_NUMBER || "iCall: 9152987821 (Mon–Sat, 8am–10pm IST) | Vandrevala Foundation: 1860-2662-345 (24x7)";
@@ -73,6 +74,25 @@ function aiSupportRateLimiter(req, res, next) {
     return next();
 }
 
+async function requireAuthenticatedUser(req, res, next) {
+    try {
+        const userId = String(req.body?.userId || "").trim();
+        if (!/^[a-fA-F0-9]{24}$/.test(userId)) {
+            return res.status(401).json({ error: "Login required" });
+        }
+
+        const user = await User.findById(userId, { _id: 1 }).lean();
+        if (!user?._id) {
+            return res.status(401).json({ error: "Login required" });
+        }
+
+        req.authUserId = String(user._id);
+        return next();
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -85,7 +105,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/contact", contactRoutes);
 
-app.post("/api/ai/support", aiSupportRateLimiter, async (req, res) => {
+app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, async (req, res) => {
     try {
         const groqApiKey = process.env.GROQ_API_KEY;
         if (!groqApiKey) {

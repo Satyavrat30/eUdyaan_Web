@@ -45,6 +45,16 @@ const profile = window.EudyaanSession?.getProfile?.() || null;
 const currentUserId = profile?.id || "";
 const fallbackAnonymousId = profile?.anonymousId || getGuestAnonymousId();
 
+function requireLoginForFeature() {
+  if (currentUserId) return true;
+  if (window.EudyaanSession?.redirectToLogin) {
+    window.EudyaanSession.redirectToLogin();
+  } else {
+    alert("Please login to use this feature.");
+  }
+  return false;
+}
+
 // If user is logged in, anonymousId is derived from their userId (deterministic, reversible by admin)
 // If not logged in, use a guest anonymous ID stored in localStorage
 function getGuestAnonymousId() {
@@ -272,6 +282,7 @@ function closeDrawer() {
 
 async function voteOnActivePost(direction) {
   if (!activePostId) return;
+  if (!requireLoginForFeature()) return;
 
   try {
     const payload = {
@@ -351,7 +362,10 @@ async function loadPosts() {
   }
 }
 
-createPrompt.addEventListener("click", () => showComposer(true));
+createPrompt.addEventListener("click", () => {
+  if (!requireLoginForFeature()) return;
+  showComposer(true);
+});
 cancelCreate.addEventListener("click", () => {
   resetCreateForm();
   showComposer(false);
@@ -359,6 +373,7 @@ cancelCreate.addEventListener("click", () => {
 
 createForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (!requireLoginForFeature()) return;
 
   const title = postTitleInput.value.trim();
   const content = postContentInput.value.trim();
@@ -448,6 +463,7 @@ replyInput.addEventListener("keydown", (event) => {
 replyForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!activePostId) return;
+  if (!requireLoginForFeature()) return;
 
   const content = replyInput.value.trim();
   if (!content) return;

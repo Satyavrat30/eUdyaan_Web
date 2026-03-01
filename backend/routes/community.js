@@ -52,6 +52,25 @@ function postActionLimiter(req, res, next) {
   return next();
 }
 
+async function requireAuthenticatedUser(req, res, next) {
+  try {
+    const userId = String(req.body?.userId || "").trim();
+    if (!/^[a-fA-F0-9]{24}$/.test(userId)) {
+      return res.status(401).json({ error: "Login required" });
+    }
+
+    const user = await User.findById(userId, { _id: 1 }).lean();
+    if (!user?._id) {
+      return res.status(401).json({ error: "Login required" });
+    }
+
+    req.authUserId = String(user._id);
+    return next();
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
 function makeAnonymousId(seed) {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
@@ -191,9 +210,10 @@ router.get("/posts", async (req, res) => {
   }
 });
 
-router.post("/posts", postActionLimiter, async (req, res) => {
+router.post("/posts", requireAuthenticatedUser, postActionLimiter, async (req, res) => {
   try {
-    const { userId, anonymousId, title, content, tags = [], mediaName = "" } = req.body;
+    const { anonymousId, title, content, tags = [], mediaName = "" } = req.body;
+    const userId = req.authUserId;
 
     const cleanedTags = Array.isArray(tags)
       ? tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean).slice(0, 5)
@@ -224,10 +244,11 @@ router.post("/posts", postActionLimiter, async (req, res) => {
   }
 });
 
-router.post("/posts/:postId/replies", postActionLimiter, async (req, res) => {
+router.post("/posts/:postId/replies", requireAuthenticatedUser, postActionLimiter, async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId, anonymousId, content, parentReplyId = null } = req.body;
+    const { anonymousId, content, parentReplyId = null } = req.body;
+    const userId = req.authUserId;
 
     const resolvedAnonymousId = await resolveAnonymousId(userId, req, anonymousId);
 
@@ -265,7 +286,8 @@ router.post("/posts/:postId/replies", postActionLimiter, async (req, res) => {
 async function votePostById(req, res) {
   try {
     const { postId } = req.params;
-    const { userId, anonymousId, direction } = req.body || {};
+    const { anonymousId, direction } = req.body || {};
+    const userId = req.authUserId || "";
     const voteDirection = String(direction || "").toLowerCase();
     if (!["up", "down"].includes(voteDirection)) {
       return res.status(400).json({ error: "direction must be 'up' or 'down'" });
@@ -334,18 +356,18 @@ async function votePostById(req, res) {
   }
 }
 
-router.post("/posts/:postId/vote", votePostById);
+router.post("/posts/:postId/vote", requireAuthenticatedUser, votePostById);
 router.post("/posts/:postId/upvote", (req, res) => {
   req.body = { ...(req.body || {}), direction: "up" };
-  return votePostById(req, res);
+  return requireAuthenticatedUser(req, res, () => votePostById(req, res));
 });
 router.post("/posts/:postId/downvote", (req, res) => {
   req.body = { ...(req.body || {}), direction: "down" };
-  return votePostById(req, res);
+  return requireAuthenticatedUser(req, res, () => votePostById(req, res));
 });
 router.post("/posts/:postId/like", (req, res) => {
   req.body = { ...(req.body || {}), direction: "up" };
-  return votePostById(req, res);
+  return requireAuthenticatedUser(req, res, () => votePostById(req, res));
 });
 
 module.exports = router;
