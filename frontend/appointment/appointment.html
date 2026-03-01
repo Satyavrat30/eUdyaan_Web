@@ -43,19 +43,19 @@
     <h2>Choose your Therapist</h2>
 
     <div class="doctor-grid">
-      <div class="doctor-card selectable">
+      <div class="doctor-card selectable" data-therapist-name="Dr. Sarah Johnson" data-therapist-role="Clinical Psychologist">
         <img src="https://i.pinimg.com/736x/2a/14/b2/2a14b296deb23f4c34fdb9c309286406.jpg" alt="">
         <h4>Dr. Sarah Johnson</h4>
         <p>Clinical Psychologist</p>
       </div>
 
-      <div class="doctor-card selectable">
+      <div class="doctor-card selectable" data-therapist-name="Dr. Sarah Johnson" data-therapist-role="Clinical Psychologist">
       <img src="https://i.pinimg.com/736x/2a/14/b2/2a14b296deb23f4c34fdb9c309286406.jpg" alt="">
         <h4>Dr. Sarah Johnson</h4>
         <p>Clinical Psychologist</p>
       </div>
 
-      <div class="doctor-card selectable">
+      <div class="doctor-card selectable" data-therapist-name="Dr. Sarah Johnson" data-therapist-role="Clinical Psychologist">
         <img src="https://i.pinimg.com/736x/2a/14/b2/2a14b296deb23f4c34fdb9c309286406.jpg" alt="">
         <h4>Dr. Sarah Johnson</h4>
         <p>Clinical Psychologist</p>
@@ -87,10 +87,10 @@
 
       <div class="times">
         <h4>Available Time</h4>
-       <button type="button" class="time selectable">10:00 AM</button>
-       <button type="button" class="time selectable">11:30 AM</button>
-       <button type="button" class="time selectable">02:00 PM</button>
-       <button type="button" class="time selectable">04:00 PM</button>
+      <button type="button" class="time selectable" data-time="10:00 AM">10:00 AM</button>
+      <button type="button" class="time selectable" data-time="11:30 AM">11:30 AM</button>
+      <button type="button" class="time selectable" data-time="02:00 PM">02:00 PM</button>
+      <button type="button" class="time selectable" data-time="04:00 PM">04:00 PM</button>
 
       </div>
     </div>
@@ -107,13 +107,13 @@
     <p class="login-note">You’ll need to log in to confirm the therepist.</p>
 
     <div class="type-grid">
-      <div class="type-card selectable">
+      <div class="type-card selectable" data-appointment-type="Video Call">
         ðŸ“¹
         <h4>Video Call</h4>
         <p>Virtual consultation</p>
       </div>
 
-      <div class="type-card selectable">
+      <div class="type-card selectable" data-appointment-type="In Person">
         ðŸ“
         <h4>In Person</h4>
         <p>Visit at clinic</p>
@@ -132,10 +132,18 @@
       <div class="check">âœ”</div>
       <h2>Appointment Confirmed</h2>
       <p>Your appointment has been successfully scheduled.</p>
+      <p id="bookingSummary" class="booking-summary"></p>
       <button onclick="location.href='../index.html'">
         Back to Home
       </button>
     </div>
+
+    <section class="history-card">
+      <h3>My Appointment History</h3>
+      <div id="appointmentHistory" class="history-list">
+        <p>Loading your appointments...</p>
+      </div>
+    </section>
   </section>
 
 </main>

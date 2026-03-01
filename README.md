@@ -12,6 +12,15 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
 
 ## Recent major updates
 
+### Access control
+
+- Protected features now require login (community posting/reply/voting, AI assistant actions, contact submission)
+- Session helper adds redirect-to-login with `next` return support after successful sign-in
+- Appointment flow now enforces:
+  - Therapist must be selected before proceeding from Step 1
+  - Login check before proceeding with booking flow
+  - Inline Step 3 guidance shown before confirmation
+
 ### Community
 
 - Required field guidance and validation for post creation (`title`, `content`, `tags`)
