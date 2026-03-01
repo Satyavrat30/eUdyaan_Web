@@ -143,6 +143,10 @@ nav .active {
   font-weight: 700;
 }
 
+.required-mark {
+  color: #b42318;
+}
+
 .create-form input,
 .create-form textarea,
 .filter-row select,

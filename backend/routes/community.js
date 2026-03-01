@@ -89,13 +89,13 @@ router.post("/posts", async (req, res) => {
   try {
     const { anonymousId, title, content, tags = [], mediaName = "" } = req.body;
 
-    if (!anonymousId || !title || !content) {
-      return res.status(400).json({ error: "anonymousId, title, and content are required" });
-    }
-
     const cleanedTags = Array.isArray(tags)
       ? tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean).slice(0, 5)
       : [];
+
+    if (!anonymousId || !title || !content || !cleanedTags.length) {
+      return res.status(400).json({ error: "anonymousId, title, content, and at least one tag are required" });
+    }
 
     const post = await CommunityPost.create({
       anonymousId: String(anonymousId).trim(),

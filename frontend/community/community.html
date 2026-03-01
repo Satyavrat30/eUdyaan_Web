@@ -33,16 +33,16 @@
     <section class="create-box" aria-label="Create post section">
       <button id="createPrompt" class="create-prompt" type="button" aria-expanded="false">Start a post...</button>
       <form id="createForm" class="create-form hidden" novalidate>
-        <label for="postTitle">Title</label>
+        <label for="postTitle">Title <span class="required-mark" aria-hidden="true">*</span></label>
         <input id="postTitle" type="text" maxlength="90" placeholder="Give your post a short title" required>
 
-        <label for="postContent">Content</label>
+        <label for="postContent">Content <span class="required-mark" aria-hidden="true">*</span></label>
         <textarea id="postContent" maxlength="1200" placeholder="Share your thoughts in 2-4 short paragraphs" required></textarea>
 
         <div class="create-grid">
           <div>
-            <label for="postTags">Tags (comma separated)</label>
-            <input id="postTags" type="text" placeholder="anxiety, exam, sleep">
+            <label for="postTags">Tags (comma separated) <span class="required-mark" aria-hidden="true">*</span></label>
+            <input id="postTags" type="text" placeholder="anxiety, exam, sleep" required>
           </div>
           <div>
             <label for="postMedia">Optional media</label>

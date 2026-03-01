@@ -33,15 +33,20 @@ const replyContext = document.getElementById("replyContext");
 const cancelReplyTarget = document.getElementById("cancelReplyTarget");
 
 const backendHost = window.location.hostname || "localhost";
-const API_BASE = window.location.port === "5000" ? "" : `http://${backendHost}:5000`;
+// If served directly by the backend (port 5000) use relative URLs, otherwise point to backend
+const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:") 
+  ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
+  : `http://${backendHost}:5000`;
 
 const profile = window.EudyaanSession?.getProfile?.() || null;
 let currentAnonymousId = profile?.anonymousId || "";
 
+// If user is logged in, anonymousId is derived from their userId (deterministic, reversible by admin)
+// If not logged in, use a guest anonymous ID stored in localStorage
 function getGuestAnonymousId() {
   const existing = localStorage.getItem(GUEST_ID_KEY);
   if (existing) return existing;
-  const generated = `Anonymous_${Math.floor(1000 + Math.random() * 9000)}`;
+  const generated = `Guest_${Math.floor(1000 + Math.random() * 9000)}`;
   localStorage.setItem(GUEST_ID_KEY, generated);
   return generated;
 }
@@ -303,13 +308,20 @@ createForm.addEventListener("submit", async (event) => {
 
   const title = postTitleInput.value.trim();
   const content = postContentInput.value.trim();
-  if (!title || !content) return;
-
   const tags = postTagsInput.value
     .split(",")
     .map((tag) => tag.trim().toLowerCase())
     .filter(Boolean)
     .slice(0, 5);
+
+  if (!title || !content || !tags.length) {
+    const missingField = !title ? postTitleInput : (!content ? postContentInput : postTagsInput);
+    missingField.focus();
+    if (typeof missingField.reportValidity === "function") {
+      missingField.reportValidity();
+    }
+    return;
+  }
 
   try {
     const data = await fetchJson(`${API_BASE}/api/community/posts`, {
@@ -368,6 +380,13 @@ threadContainer.addEventListener("click", (event) => {
     }
     threadContainer.innerHTML = renderThread(post.replies || []);
     setReplyContextLabel(post);
+  }
+});
+
+replyInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    replyForm.requestSubmit();
   }
 });
 

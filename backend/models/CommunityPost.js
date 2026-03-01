@@ -16,7 +16,13 @@ const communityPostSchema = new mongoose.Schema(
     anonymousId: { type: String, required: true, trim: true },
     title: { type: String, required: true, trim: true, maxlength: 90 },
     content: { type: String, required: true, trim: true, maxlength: 1200 },
-    tags: [{ type: String, trim: true, lowercase: true }],
+    tags: {
+      type: [{ type: String, trim: true, lowercase: true }],
+      validate: {
+        validator: (value) => Array.isArray(value) && value.length > 0,
+        message: "At least one tag is required"
+      }
+    },
     mediaName: { type: String, default: "" },
     likes: { type: Number, default: 0, min: 0 }
   },
