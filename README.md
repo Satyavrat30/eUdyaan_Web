@@ -21,6 +21,17 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
   - Login check before proceeding with booking flow
   - Inline Step 3 guidance shown before confirmation
 
+### Appointments
+
+- Added persistent appointment storage in MongoDB
+- Added authenticated appointment APIs:
+  - `POST /api/appointments` (create booking)
+  - `GET /api/appointments` (list current user bookings)
+  - `DELETE /api/appointments/:appointmentId` (cancel booking)
+- Added consultant detail persistence (`consultantName`, `consultantRole`) with date/time/type
+- Appointment wizard now creates real bookings and shows booking summary
+- Added dedicated `My Appointments` history page with cancel actions
+
 ### Community
 
 - Required field guidance and validation for post creation (`title`, `content`, `tags`)
@@ -41,6 +52,18 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
 - Added API rate limiting and overload protection
 - Improved upstream quota-limit handling (friendly 429 flow)
 - Prompt/system behavior tuned for Indian student context and crisis guidance
+- Added stronger high-risk phrase detection (English, Hinglish, and Hindi)
+- Added safer crisis UX: high-risk user messages trigger urgent red guidance flow
+- Added backend risk-signal utility + matrix script for phrase regression checks
+
+### Crisis safety + language behavior (Resources chatbot)
+
+- Shared backend detector in `backend/utils/riskSignals.js`
+- Risk phrase validation script in `backend/scripts/risk-signal-matrix.js`
+- NPM script support:
+  - Root: `npm run test:risk`
+  - Backend: `npm run test:risk --prefix backend`
+- Language-aware responses for user conversation style (English/Hinglish/Hindi)
 
 ### Homepage + navigation
 
@@ -105,3 +128,11 @@ http://localhost:5000
 - Keep secrets only in `.env` files; never commit real keys.
 - If dependencies are missing, run `npm install --prefix backend` again.
 - If server doesn’t pick up latest route changes, restart backend.
+
+## Quick validation
+
+Run this after updating safety patterns:
+
+```bash
+npm run test:risk
+```
