@@ -2,6 +2,7 @@
   "name": "eudyaan-web",
   "private": true,
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "test:risk": "node backend/scripts/risk-signal-matrix.js"
   }
 }

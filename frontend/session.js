@@ -37,6 +37,12 @@ function getReportLink() {
   return `${prefix}resources/resources.html#report`;
 }
 
+function getAppointmentsLink() {
+  const inSubdir = /\/(resources|community|appointment|about|contact)\//.test(window.location.pathname);
+  const prefix = inSubdir ? "../" : "./";
+  return `${prefix}appointment/my-appointments.html`;
+}
+
 function getHomeLink() {
   const inSubdir = /\/(resources|community|appointment|about|contact)\//.test(window.location.pathname);
   return inSubdir ? "../index.html" : "./index.html";
@@ -74,7 +80,8 @@ function renderAuthArea() {
   const profile = getProfile();
   if (!profile) return;
 
-  const report = parseJson(localStorage.getItem(REPORT_KEY), null);
+  const reportKey = profile?.id ? `${REPORT_KEY}:${profile.id}` : REPORT_KEY;
+  const report = parseJson(localStorage.getItem(reportKey) || localStorage.getItem(REPORT_KEY), null);
   const reportCount = report?.importantPoints?.length || 0;
   const firstLetter = (profile.name || "U").trim().charAt(0).toUpperCase();
 
@@ -89,6 +96,7 @@ function renderAuthArea() {
       <p>${profile.email || "No email"}</p>
       <p><strong>Anonymous ID:</strong> ${profile.anonymousId}</p>
       <a href="${getReportLink()}">View Chat Report (${reportCount})</a>
+      <a href="${getAppointmentsLink()}">My Appointments</a>
       <button id="logoutBtn" type="button" class="logout-btn">Logout</button>
     </div>
   `;

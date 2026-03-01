@@ -1,0 +1,67 @@
+const RISK_PATTERNS = [
+  /\b(kms|kys)\b/i,
+  /\bsuicide\b/i,
+  /\bkill\s*my\s*self\b/i,
+  /\btake\s*my\s*life\b/i,
+  /\btake\s*my\s*own\s*life\b/i,
+  /\bwant\s*to\s*die\b/i,
+  /\bdon'?t\s*want\s*to\s*live\b/i,
+  /\bdo\s*not\s*want\s*to\s*live\b/i,
+  /\bno\s*reason\s*to\s*live\b/i,
+  /\bbetter\s*off\s*dead\b/i,
+  /\bwish\s*i\s*was\s*dead\b/i,
+  /\bcan'?t\s*go\s*on\b/i,
+  /\bnot\s*worth\s*living\b/i,
+  /\bend\s*my\s*life\b/i,
+  /\bend\s*it\s*all\b/i,
+  /\bself[- ]?harm\b/i,
+  /\bhurt\s*myself\b/i,
+  /\bmurder\b/i,
+  /\bkill\b/i,
+  /\bmarna\b/i,
+  /\bmar\s*jana\b/i,
+  /\bjeena\s*nahi\b/i,
+  /\bjeena\s*nahi\s*(hai|chahta|chahti)\b/i,
+  /\bmujhe\s*marna\s*hai\b/i,
+  /\bmujhe\s*mar\s*jana\s*hai\b/i,
+  /\bjaan\s*dena\b/i,
+  /\bapni\s*jaan\s*lena\b/i,
+  /\bkhud\s*ko\s*mar(na|\s*dena)\b/i,
+  /\bsuicidal\b/i,
+  /\bfansi\b/i,
+  /\bfasi\b/i,
+  /\bfaansi\b/i,
+  /\bphansi\b/i,
+  /\bphaansi\b/i,
+  /\bf[ae]?a?n?s[iy]\s*(lagana|lgana|lagaana|lagane|lgane)\b/i,
+  /\blatakna\b/i,
+  /\bphanda\b/i,
+  /\bzeher\b/i,
+  /\boverdose\b/i,
+  /\bmaar\s*do\b/i,
+  /\bmar\s*do\b/i,
+  /\bquit\s*life\b/i,
+  /\bquit\s*living\b/i,
+  /आत्महत्या/i,
+  /खुदकुशी/i,
+  /फांसी/i,
+  /फाँसी/i,
+  /फंदा/i,
+  /मर\s*जाना/i,
+  /मरना\s*है/i,
+  /जीना\s*नहीं/i,
+  /जान\s*दे\s*(दूंगा|दूँगा|दूंगी|दूँगी|दूंगी|दुंगी|देना)/i,
+  /खुद\s*को\s*मार/i,
+  /मर\s*डाल/i,
+  /मुझे\s*मरना\s*है/i
+];
+
+function hasSeriousRiskSignal(text) {
+  if (!text || typeof text !== "string") return false;
+  return RISK_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+module.exports = {
+  RISK_PATTERNS,
+  hasSeriousRiskSignal
+};

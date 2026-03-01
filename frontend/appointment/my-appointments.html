@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Appointments</title>
+  <link rel="stylesheet" href="my-appointments.css" />
+</head>
+<body>
+<header class="topbar">
+  <a class="logo" href="../index.html" aria-label="Go to home"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../resources/resources.html">Resources</a>
+    <a class="active" href="./my-appointments.html">My Appointments</a>
+    <a href="../community/community.html">Community</a>
+    <a href="../about/about.html">About us</a>
+    <a href="../contact/contact.html">Contact us</a>
+  </nav>
+  <div class="auth">
+    <a href="../login.html"><button class="login">login</button></a>
+    <a href="../signup.html"><button class="login">Sign up</button></a>
+  </div>
+</header>
+
+<main class="wrapper">
+  <h1>My Appointments</h1>
+  <p class="subtitle">View your consultant history and cancel upcoming sessions.</p>
+  <div id="appointmentsList" class="appointments-list">
+    <p>Loading appointments...</p>
+  </div>
+</main>
+
+<script src="../session.js"></script>
+<script src="my-appointments.js"></script>
+</body>
+</html>

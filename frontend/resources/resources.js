@@ -150,8 +150,8 @@
     }
   ]
 };
-const CHAT_STORAGE_KEY = "eudyaan_student_chat_state";
-const WELLNESS_REPORT_KEY = "eudyaan_student_wellness_report";
+const CHAT_STORAGE_KEY_BASE = "eudyaan_student_chat_state";
+const WELLNESS_REPORT_KEY_BASE = "eudyaan_student_wellness_report";
 
 const articleCards = document.getElementById("article-cards");
 const videoCards = document.getElementById("video-cards");
@@ -166,8 +166,10 @@ const chatBox = document.getElementById("assistant-chat");
 const assistantForm = document.getElementById("assistant-form");
 const assistantInput = document.getElementById("assistant-input");
 const moodQuick = document.getElementById("mood-quick");
+const assistantStatus = document.getElementById("assistant-status");
 const reportBtn = document.getElementById("report-btn");
 const downloadReportBtn = document.getElementById("download-report-btn");
+const downloadReportJsonBtn = document.getElementById("download-report-json-btn");
 const clearChatBtn = document.getElementById("clear-chat-btn");
 const reportView = document.getElementById("report-view");
 
@@ -175,13 +177,82 @@ const backendHost = window.location.hostname || "localhost";
 const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:")
   ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
   : `http://${backendHost}:5000`;
+const HELPLINE_CALL_NUMBER = "9152987821";
+const CONSULT_DOCTOR_LINK = "../appointment/appointment.html";
 const profile = window.EudyaanSession?.getProfile?.() || null;
 const currentUserId = profile?.id || "";
+const CHAT_STORAGE_KEY = `${CHAT_STORAGE_KEY_BASE}:${currentUserId || "guest"}`;
+const WELLNESS_REPORT_KEY = `${WELLNESS_REPORT_KEY_BASE}:${currentUserId || "guest"}`;
+
+const CHAT_LABELS = {
+  english: {
+    welcome: "Hey, I am here with you. Talk freely in your own words, and we will handle one step at a time.",
+    sessionCleared: "Session cleared. How is your mood right now?",
+    crisisGuidance: "Please stay calm. This language can be harmful for you right now. Take slow deep breaths, reach out to a trusted person, and contact a helpline or doctor immediately.",
+    tooFast: "You are sending requests too fast. Please wait a moment and try again.",
+    serverBusy: "Server is currently busy. Please try again in a minute.",
+    cannotReach: "I cannot connect to server. Start backend: cd backend && npm start",
+    keyMissing: "Groq key missing. Add GROQ_API_KEY in backend/.env and restart server.",
+    groqFailedPrefix: "Groq API failed.",
+    groqFailedFallback: "Check key, model, internet, or Groq quota.",
+    temporaryIssue: "Temporary issue. Please try again.",
+    fallbackReply: "I could not generate a response right now."
+  },
+  hinglish: {
+    welcome: "Hey, main aapke saath hoon. Aap apne words mein freely baat karo, hum step by step handle karenge.",
+    sessionCleared: "Session clear ho gaya. Abhi aapka mood kaisa hai?",
+    crisisGuidance: "Please calm rahiye. Ye language abhi aapke liye harmful ho sakti hai. Dheere deep breaths lijiye, kisi trusted person se baat kijiye, aur turant helpline ya doctor se contact kijiye.",
+    tooFast: "Aap bahut fast requests bhej rahe ho. Thoda wait karke phir try karo.",
+    serverBusy: "Server abhi busy hai. Ek minute baad try karo.",
+    cannotReach: "Main server se connect nahi kar pa raha. Backend start karo: cd backend && npm start",
+    keyMissing: "Groq key missing hai. backend/.env me GROQ_API_KEY add karke server restart karo.",
+    groqFailedPrefix: "Groq API fail hua.",
+    groqFailedFallback: "Key, model, internet, ya Groq quota check karo.",
+    temporaryIssue: "Temporary issue aaya hai. Please dobara try karo.",
+    fallbackReply: "Abhi response generate nahi ho paaya."
+  },
+  hindi: {
+    welcome: "मैं आपके साथ हूँ। आप अपने शब्दों में खुलकर बात करें, हम एक-एक कदम साथ में संभालेंगे।",
+    sessionCleared: "सेशन साफ़ हो गया। अभी आपका मूड कैसा है?",
+    crisisGuidance: "कृपया शांत रहें। यह भाषा अभी आपके लिए हानिकारक हो सकती है। धीरे-धीरे गहरी साँस लें, किसी भरोसेमंद व्यक्ति से बात करें, और तुरंत हेल्पलाइन या डॉक्टर से संपर्क करें।",
+    tooFast: "आप बहुत तेज़ी से रिक्वेस्ट भेज रहे हैं। कृपया थोड़ा रुककर फिर कोशिश करें।",
+    serverBusy: "सर्वर अभी व्यस्त है। कृपया एक मिनट बाद फिर कोशिश करें।",
+    cannotReach: "मैं सर्वर से कनेक्ट नहीं कर पा रहा हूँ। बैकएंड शुरू करें: cd backend && npm start",
+    keyMissing: "Groq key नहीं मिली। backend/.env में GROQ_API_KEY जोड़कर सर्वर रीस्टार्ट करें।",
+    groqFailedPrefix: "Groq API विफल हुई।",
+    groqFailedFallback: "Key, model, internet, या Groq quota जाँचें।",
+    temporaryIssue: "अस्थायी समस्या आई है। कृपया फिर कोशिश करें।",
+    fallbackReply: "अभी जवाब तैयार नहीं हो पाया।"
+  }
+};
 
 function requireLoginForFeature() {
   if (currentUserId) return true;
   window.EudyaanSession?.redirectToLogin?.();
   return false;
+}
+
+function detectConversationLanguage(text) {
+  const value = String(text || "");
+  if (/[\u0900-\u097F]/.test(value)) return "hindi";
+
+  const lower = value.toLowerCase();
+  const hinglishHints = [
+    "mujhe", "mujh", "mera", "meri", "mere", "hai", "hoon", "nahi", "kya", "kyu", "kyun", "kaise",
+    "aap", "tum", "main", "mai", "kr", "kar", "raha", "rahi", "yaar", "thik", "theek", "acha", "accha"
+  ];
+  const hits = hinglishHints.reduce((count, token) => count + (lower.includes(token) ? 1 : 0), 0);
+  return hits >= 2 ? "hinglish" : "english";
+}
+
+function labelsForLanguage(language) {
+  return CHAT_LABELS[language] || CHAT_LABELS.english;
+}
+
+function detectInitialLanguage() {
+  const browserLang = String(window.navigator?.language || "").toLowerCase();
+  if (browserLang.startsWith("hi")) return "hindi";
+  return "english";
 }
 
 function escapeHtml(value) {
@@ -228,16 +299,63 @@ const ISSUE_PATTERNS = {
 };
 
 const CRISIS_PATTERNS = [
+  /\b(kms|kys)\b/i,
+  /\bsuicide\b/i,
+  /\bkill\s*my\s*self\b/i,
+  /\btake\s*my\s*life\b/i,
+  /\btake\s*my\s*own\s*life\b/i,
+  /\bwant\s*to\s*die\b/i,
+  /\bdon'?t\s*want\s*to\s*live\b/i,
+  /\bdo\s*not\s*want\s*to\s*live\b/i,
+  /\bno\s*reason\s*to\s*live\b/i,
+  /\bbetter\s*off\s*dead\b/i,
+  /\bwish\s*i\s*was\s*dead\b/i,
+  /\bcan'?t\s*go\s*on\b/i,
+  /\bnot\s*worth\s*living\b/i,
+  /\bend\s*my\s*life\b/i,
+  /\bend\s*it\s*all\b/i,
+  /\bself[- ]?harm\b/i,
+  /\bhurt\s*myself\b/i,
   /\bquit life\b/i,
   /\bquit living\b/i,
   /\bend it all\b/i,
-  /no reason to live/i,
-  /kill myself/i,
-  /end my life/i,
-  /self[- ]?harm/i,
+  /\bmurder\b/i,
+  /\bkill\b/i,
+  /\bmarna\b/i,
+  /\bmar\s*jana\b/i,
+  /\bjeena\s*nahi\b/i,
+  /\bjeena\s*nahi\s*(hai|chahta|chahti)\b/i,
+  /\bmujhe\s*marna\s*hai\b/i,
+  /\bmujhe\s*mar\s*jana\s*hai\b/i,
+  /\bjaan\s*dena\b/i,
+  /\bapni\s*jaan\s*lena\b/i,
+  /\bkhud\s*ko\s*mar(na|\s*dena)\b/i,
+  /\bsuicidal\b/i,
+  /\bfansi\b/i,
+  /\bfasi\b/i,
+  /\bfaansi\b/i,
+  /\bphansi\b/i,
+  /\bphaansi\b/i,
+  /\bf[ae]?a?n?s[iy]\s*(lagana|lgana|lagaana|lagane|lgane)\b/i,
+  /\blatakna\b/i,
+  /\bphanda\b/i,
+  /\bzeher\b/i,
+  /\boverdose\b/i,
+  /\bmaar\s*do\b/i,
+  /\bmar\s*do\b/i,
   /i want to die/i,
-  /hurt myself/i,
-  /suicide/i
+  /आत्महत्या/i,
+  /खुदकुशी/i,
+  /फांसी/i,
+  /फाँसी/i,
+  /फंदा/i,
+  /मर\s*जाना/i,
+  /मरना\s*है/i,
+  /जीना\s*नहीं/i,
+  /जान\s*दे\s*(दूंगा|दूँगा|दूंगी|दूँगी|दूंगी|दुंगी|देना)/i,
+  /खुद\s*को\s*मार/i,
+  /मर\s*डाल/i,
+  /मुझे\s*मरना\s*है/i
 ];
 
 function getEmptyState() {
@@ -254,7 +372,7 @@ function getEmptyState() {
 
 function loadState() {
   try {
-    const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY) || localStorage.getItem(CHAT_STORAGE_KEY_BASE);
     if (!raw) return getEmptyState();
     const parsed = JSON.parse(raw);
     return { ...getEmptyState(), ...parsed };
@@ -264,6 +382,19 @@ function loadState() {
 }
 
 let state = loadState();
+let isAssistantBusy = false;
+let typingIndicatorEl = null;
+let preferredConversationLanguage = detectInitialLanguage();
+
+if (state.history.length) {
+  const lastUserMessage = [...state.history]
+    .reverse()
+    .find((item) => item.role === "user" && item.content);
+
+  if (lastUserMessage?.content) {
+    preferredConversationLanguage = detectConversationLanguage(lastUserMessage.content);
+  }
+}
 
 function saveState() {
   localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(state));
@@ -342,8 +473,67 @@ function renderMessage(role, text, critical = false) {
   const div = document.createElement("div");
   div.className = `msg ${role}${critical ? " critical" : ""}`;
   div.textContent = critical ? `[RED ALERT] ${text}` : text;
+
+  if (critical && role === "ai") {
+    const actionRow = document.createElement("div");
+    actionRow.className = "alert-actions";
+    actionRow.innerHTML = `
+      <a class="alert-btn" href="tel:${HELPLINE_CALL_NUMBER}">Call Helpline</a>
+      <a class="alert-btn secondary" href="${CONSULT_DOCTOR_LINK}">Consult Doctor</a>
+    `;
+    div.appendChild(actionRow);
+  }
+
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function ensureTypingIndicator() {
+  if (typingIndicatorEl) return;
+  typingIndicatorEl = document.createElement("div");
+  typingIndicatorEl.className = "msg ai typing";
+  typingIndicatorEl.textContent = "AI is thinking...";
+  chatBox.appendChild(typingIndicatorEl);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  if (!typingIndicatorEl) return;
+  typingIndicatorEl.remove();
+  typingIndicatorEl = null;
+}
+
+function setAssistantBusy(busy) {
+  isAssistantBusy = busy;
+
+  const submitBtn = assistantForm?.querySelector("button[type='submit']");
+  if (submitBtn) {
+    submitBtn.disabled = busy;
+    submitBtn.textContent = busy ? "Thinking..." : "Ask AI";
+  }
+
+  if (assistantInput) {
+    assistantInput.disabled = busy;
+  }
+
+  moodQuick?.querySelectorAll("button").forEach((button) => {
+    button.disabled = busy;
+  });
+
+  [reportBtn, downloadReportBtn, downloadReportJsonBtn, clearChatBtn].forEach((button) => {
+    if (button) button.disabled = busy;
+  });
+
+  if (assistantStatus) {
+    assistantStatus.classList.toggle("hidden", !busy);
+    assistantStatus.textContent = busy ? "Generating supportive response..." : "";
+  }
+
+  if (busy) {
+    ensureTypingIndicator();
+  } else {
+    removeTypingIndicator();
+  }
 }
 
 function appendMessage(role, text, persist = true, critical = false) {
@@ -488,23 +678,41 @@ function showReport() {
 
 function downloadReport() {
   const report = generateReportData();
+  saveReportSnapshot();
+  const datePart = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const userPart = currentUserId ? `user-${String(currentUserId).slice(-6)}` : "guest";
   const blob = new Blob([formatReportText(report)], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `wellness-report-${new Date().toISOString().slice(0, 10)}.txt`;
+  a.download = `wellness-report-${userPart}-${datePart}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadReportJson() {
+  const report = generateReportData();
+  saveReportSnapshot();
+  const datePart = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const userPart = currentUserId ? `user-${String(currentUserId).slice(-6)}` : "guest";
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `wellness-report-${userPart}-${datePart}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 function clearSession() {
   state = getEmptyState();
+  preferredConversationLanguage = detectInitialLanguage();
   localStorage.removeItem(CHAT_STORAGE_KEY);
   localStorage.removeItem(WELLNESS_REPORT_KEY);
   chatBox.innerHTML = "";
   reportView.classList.add("hidden");
   reportView.textContent = "";
-  appendMessage("ai", "Session cleared. How is your mood right now?", false);
+  appendMessage("ai", labelsForLanguage(preferredConversationLanguage).sessionCleared, false);
 }
 
 function isClearCommand(text) {
@@ -512,13 +720,13 @@ function isClearCommand(text) {
   return normalized === "clear" || normalized === "delete" || normalized === "exit";
 }
 
-async function askAi(message) {
+async function askAi(message, preferredLanguage) {
   let response;
   try {
     response = await fetch(`${API_BASE}/api/ai/support`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUserId, message, history: state.history })
+      body: JSON.stringify({ userId: currentUserId, message, history: state.history, preferredLanguage })
     });
   } catch {
     throw new Error("Cannot reach backend server.");
@@ -537,23 +745,39 @@ async function askAi(message) {
 
 async function handleUserMessage(message) {
   if (!message) return;
+  if (isAssistantBusy) return;
 
   if (isClearCommand(message)) {
     clearSession();
     return;
   }
 
+  preferredConversationLanguage = detectConversationLanguage(message);
+  const userLanguage = preferredConversationLanguage;
+  const textLabel = labelsForLanguage(userLanguage);
+
   const userCriticalTerm = detectCriticalTerm(message);
   appendMessage("user", message, true, Boolean(userCriticalTerm));
   if (userCriticalTerm) {
     registerCriticalEvent("user", message, userCriticalTerm);
+    appendMessage(
+      "ai",
+      textLabel.crisisGuidance,
+      true,
+      true
+    );
+    state.seriousCount += 1;
+    saveState();
+    saveReportSnapshot();
+    return;
   }
   trackStudentState(message);
   saveReportSnapshot();
 
   try {
-    const result = await askAi(message);
-    const reply = result.reply || "I could not generate a response right now.";
+    setAssistantBusy(true);
+    const result = await askAi(message, userLanguage);
+    const reply = result.reply || textLabel.fallbackReply;
     const aiCriticalTerm = detectCriticalTerm(reply);
     const aiCritical = Boolean(result.serious || aiCriticalTerm);
     appendMessage("ai", reply, true, aiCritical);
@@ -569,20 +793,22 @@ async function handleUserMessage(message) {
   } catch (error) {
     const text = String(error.message || "");
     if (text.includes("Too many requests")) {
-      appendMessage("ai", "You are sending requests too fast. Please wait a moment and try again.");
+      appendMessage("ai", textLabel.tooFast);
     } else if (text.includes("Server is busy")) {
-      appendMessage("ai", "Server is currently busy. Please try again in a minute.");
+      appendMessage("ai", textLabel.serverBusy);
     } else
     if (text.includes("Cannot reach backend")) {
-      appendMessage("ai", "I cannot connect to server. Start backend: cd backend && npm start");
+      appendMessage("ai", textLabel.cannotReach);
     } else if (text.includes("GROQ_API_KEY")) {
-      appendMessage("ai", "Groq key missing. Add GROQ_API_KEY in backend/.env and restart server.");
+      appendMessage("ai", textLabel.keyMissing);
     } else if (text.includes("Groq request failed")) {
       const cleaned = text.replace("Groq request failed", "").trim();
-      appendMessage("ai", `Groq API failed. ${cleaned || "Check key, model, internet, or Groq quota."}`);
+      appendMessage("ai", `${textLabel.groqFailedPrefix} ${cleaned || textLabel.groqFailedFallback}`);
     } else {
-      appendMessage("ai", "Temporary issue. Please try again.");
+      appendMessage("ai", textLabel.temporaryIssue);
     }
+  } finally {
+    setAssistantBusy(false);
   }
 }
 
@@ -611,6 +837,7 @@ modal.addEventListener("click", (event) => {
 assistantForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!requireLoginForFeature()) return;
+  if (isAssistantBusy) return;
   const message = assistantInput.value.trim();
   assistantInput.value = "";
   await handleUserMessage(message);
@@ -618,6 +845,7 @@ assistantForm.addEventListener("submit", async (event) => {
 
 moodQuick.addEventListener("click", async (event) => {
   if (!requireLoginForFeature()) return;
+  if (isAssistantBusy) return;
   const button = event.target.closest("button[data-mood]");
   if (!button) return;
   const mood = button.getAttribute("data-mood");
@@ -632,6 +860,10 @@ downloadReportBtn.addEventListener("click", () => {
   if (!requireLoginForFeature()) return;
   downloadReport();
 });
+downloadReportJsonBtn.addEventListener("click", () => {
+  if (!requireLoginForFeature()) return;
+  downloadReportJson();
+});
 clearChatBtn.addEventListener("click", () => {
   if (!requireLoginForFeature()) return;
   clearSession();
@@ -641,7 +873,7 @@ if (window.location.hash === "#report") {
   if (!requireLoginForFeature()) {
     // Redirect triggered by session helper.
   } else {
-  const existingReport = localStorage.getItem(WELLNESS_REPORT_KEY);
+  const existingReport = localStorage.getItem(WELLNESS_REPORT_KEY) || localStorage.getItem(WELLNESS_REPORT_KEY_BASE);
   if (existingReport) {
     try {
       reportView.classList.remove("hidden");
@@ -663,6 +895,6 @@ if (state.history.length) {
     renderMessage(role, item.content, Boolean(item.critical));
   });
 } else {
-  appendMessage("ai", "Hey, I am here with you. Talk freely in your own words, and we will handle one step at a time.", false);
+  appendMessage("ai", labelsForLanguage(preferredConversationLanguage).welcome, false);
 }
 

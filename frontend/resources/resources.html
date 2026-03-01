@@ -48,6 +48,7 @@
       <button type="button" data-mood="confused">Confused</button>
     </div>
     <div class="assistant-chat" id="assistant-chat"></div>
+    <p class="assistant-status hidden" id="assistant-status" aria-live="polite"></p>
     <form class="assistant-form" id="assistant-form">
       <input id="assistant-input" type="text" placeholder="Type your concern..." required>
       <button type="submit">Ask AI</button>
@@ -55,6 +56,7 @@
     <div class="assistant-actions">
       <button type="button" id="report-btn">Generate Report</button>
       <button type="button" id="download-report-btn">Download Report</button>
+      <button type="button" id="download-report-json-btn">Download JSON</button>
       <button type="button" id="clear-chat-btn" class="danger-btn">Clear Chat</button>
     </div>
     <pre class="report-view hidden" id="report-view"></pre>

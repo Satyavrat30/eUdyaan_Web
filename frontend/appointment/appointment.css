@@ -235,3 +235,57 @@ button {
   font-size: 48px;
   color: green;
 }
+
+.booking-summary {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondary-btn {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.history-card {
+  margin: 26px auto 0;
+  max-width: 720px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+}
+
+.history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.history-item {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.history-item h4 {
+  margin: 0 0 6px;
+  color: #111827;
+}
+
+.history-item p {
+  margin: 4px 0;
+  color: #374151;
+}
+
+.cancel-booking {
+  margin-top: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+}

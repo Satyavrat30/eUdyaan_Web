@@ -3,33 +3,109 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const nodemailer = require("nodemailer");
 const User = require("./models/User");
+const { hasSeriousRiskSignal } = require("./utils/riskSignals");
 
 const app = express();
 const HELPLINE_NUMBER = process.env.HELPLINE_NUMBER || "iCall: 9152987821 (Mon–Sat, 8am–10pm IST) | Vandrevala Foundation: 1860-2662-345 (24x7)";
+const HELPLINE_PRIMARY_NUMBER = process.env.HELPLINE_PRIMARY_NUMBER || "9152987821";
+const ALERT_EMAIL = process.env.ALERT_EMAIL || process.env.EMAIL_USER || "";
 const aiRateWindowMs = 60 * 1000;
 const aiRateMaxRequests = 10;
 const aiRateBuckets = new Map();
 const aiRateMaxKeys = 5000;
 let aiLastCleanupAt = 0;
 
-function hasSeriousRiskSignal(text) {
-    if (!text || typeof text !== "string") return false;
-    const input = text.toLowerCase();
-    const patterns = [
-        /\bsuicide\b/,
-        /\bkill myself\b/,
-        /\bend my life\b/,
-        /\bself[- ]?harm\b/,
-        /\bi want to die\b/,
-        /\bi do not want to live\b/,
-        /\bhurt myself\b/,
-        /\bno reason to live\b/,
-        /\bend it all\b/,
-        /\bquit life\b/,
-        /\bquit living\b/
+const SUPPORTED_CHAT_LANGUAGES = new Set(["english", "hinglish", "hindi"]);
+
+function inferConversationLanguage(text) {
+    const value = String(text || "");
+
+    if (/[\u0900-\u097F]/.test(value)) {
+        return "hindi";
+    }
+
+    const lower = value.toLowerCase();
+    const hinglishHints = [
+        "mujhe", "mujh", "mera", "meri", "mere", "hai", "hoon", "nahi", "kyu", "kyun", "kya", "kaise",
+        "aap", "tum", "main", "mai", "kr", "kar", "raha", "rahi", "yaar", "thik", "theek", "acha", "accha"
     ];
-    return patterns.some((pattern) => pattern.test(input));
+    const hits = hinglishHints.reduce((count, token) => count + (lower.includes(token) ? 1 : 0), 0);
+
+    return hits >= 2 ? "hinglish" : "english";
+}
+
+function resolveConversationLanguage(message, preferredLanguage) {
+    const requested = String(preferredLanguage || "").trim().toLowerCase();
+    if (SUPPORTED_CHAT_LANGUAGES.has(requested)) {
+        return requested;
+    }
+    return inferConversationLanguage(message);
+}
+
+function getLanguageInstruction(language) {
+    if (language === "hindi") {
+        return "Respond in Hindi (Devanagari script). Keep tone warm, simple, and culturally natural for Indian students.";
+    }
+    if (language === "hinglish") {
+        return "Respond in Hinglish (Roman Hindi + simple English mix), matching the user's casual tone.";
+    }
+    return "Respond in English.";
+}
+
+function getLocalizedCrisisAlert(language) {
+    if (language === "hindi") {
+        return `RED ALERT: यह स्थिति अभी संवेदनशील हो सकती है। कृपया शांत रहें, गहरी साँस लें, और तुरंत किसी भरोसेमंद व्यक्ति से बात करें। अभी हेल्पलाइन पर संपर्क करें: ${HELPLINE_NUMBER}. यदि तुरंत खतरा हो तो 112 पर कॉल करें।`;
+    }
+    if (language === "hinglish") {
+        return `RED ALERT: Abhi aap emotionally risky state mein ho sakte hain. Please calm rahiye, deep breaths lijiye, aur turant kisi trusted person se baat kijiye. Helpline par abhi contact karein: ${HELPLINE_NUMBER}. Immediate danger ho to 112 call karein.`;
+    }
+    return `RED ALERT: This may be an immediate mental health risk. Please stay calm, take slow deep breaths, and contact a trusted person right now. Call helpline now: ${HELPLINE_NUMBER}. If in immediate danger, call 112.`;
+}
+
+function getMailTransporter() {
+    return nodemailer.createTransport({
+        service: process.env.EMAIL_SERVICE || "gmail",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+}
+
+async function notifyRiskAlertInBackground(payload) {
+    const snapshot = {
+        userId: String(payload?.userId || "unknown"),
+        at: payload?.at || new Date().toISOString(),
+        clientIp: String(payload?.clientIp || "unknown"),
+        message: String(payload?.message || "").slice(0, 1000)
+    };
+
+    console.warn("[RISK_ALERT]", snapshot);
+
+    if (!ALERT_EMAIL || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        return;
+    }
+
+    try {
+        const transporter = getMailTransporter();
+        await transporter.sendMail({
+            from: `"eUdyaan Alert" <${process.env.EMAIL_USER}>`,
+            to: ALERT_EMAIL,
+            subject: "[eUdyaan] Risk Alert Triggered",
+            text: [
+                "A high-risk message was detected.",
+                `Time: ${snapshot.at}`,
+                `User ID: ${snapshot.userId}`,
+                `Client IP: ${snapshot.clientIp}`,
+                "Message:",
+                snapshot.message
+            ].join("\n")
+        });
+    } catch (error) {
+        console.error("Risk alert email failed:", error.message);
+    }
 }
 
 function getClientIp(req) {
@@ -101,9 +177,11 @@ app.use(express.json());
 const authRoutes = require("./routes/auth");
 const communityRoutes = require("./routes/community");
 const contactRoutes = require("./routes/contact");
+const appointmentRoutes = require("./routes/appointments");
 app.use("/api/auth", authRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, async (req, res) => {
     try {
@@ -112,11 +190,20 @@ app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, asyn
             return res.status(500).json({ error: "GROQ_API_KEY is missing in backend/.env" });
         }
 
-        const { message, history } = req.body || {};
+        const { message, history, preferredLanguage } = req.body || {};
         if (!message || typeof message !== "string") {
             return res.status(400).json({ error: "Message is required" });
         }
+        const conversationLanguage = resolveConversationLanguage(message, preferredLanguage);
         const serious = hasSeriousRiskSignal(message);
+        if (serious) {
+            void notifyRiskAlertInBackground({
+                userId: req.authUserId,
+                clientIp: getClientIp(req),
+                at: new Date().toISOString(),
+                message
+            });
+        }
 
         const safeHistory = Array.isArray(history)
             ? history
@@ -127,7 +214,7 @@ app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, asyn
                 }))
                 .filter((msg) => msg.content.trim().length > 0)
             : [];
-        const systemPrompt = `You are a warm and supportive mental wellness assistant for Indian college students. Keep language simple, kind, and conversational. Keep replies short (2-5 lines), practical, and easy to act on. You understand the pressures of Indian college life — competitive exams, JEE/NEET/placement stress, family expectations, hostel life, and academic pressure. Let users chat freely. Validate feelings first, then suggest 1-2 small next steps. Do not diagnose conditions. Reference Indian support systems like talking to a college counsellor, NIMHANS, or iCall when relevant. If user mentions self-harm or immediate danger, clearly advise contacting local emergency services (112) and a trusted person immediately. Use these helplines in crisis: ${HELPLINE_NUMBER}.`;
+        const systemPrompt = `You are a warm and supportive mental wellness assistant for Indian college students. Keep language simple, kind, and conversational. Keep replies short (2-5 lines), practical, and easy to act on. You understand the pressures of Indian college life — competitive exams, JEE/NEET/placement stress, family expectations, hostel life, and academic pressure. Let users chat freely. Validate feelings first, then suggest 1-2 small next steps. Do not diagnose conditions. Reference Indian support systems like talking to a college counsellor, NIMHANS, or iCall when relevant. If user mentions self-harm or immediate danger, clearly advise contacting local emergency services (112) and a trusted person immediately. Use these helplines in crisis: ${HELPLINE_NUMBER}. ${getLanguageInstruction(conversationLanguage)} Always match the user's current conversation language and style. If the user switches language, switch too.`;
         const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
 
         const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -187,7 +274,7 @@ app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, asyn
         const data = await groqResponse.json();
         let reply = data?.choices?.[0]?.message?.content || "I was unable to generate a response.";
         if (serious) {
-            reply += `\n\nThis seems serious. Please contact ${HELPLINE_NUMBER} now and reach out to a trusted person immediately.`;
+            reply += `\n\n${getLocalizedCrisisAlert(conversationLanguage)}`;
         }
         return res.json({ reply, serious });
     } catch (error) {
