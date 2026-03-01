@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
-const HELPLINE_NUMBER = process.env.HELPLINE_NUMBER || "988 (US Suicide & Crisis Lifeline)";
+const HELPLINE_NUMBER = process.env.HELPLINE_NUMBER || "iCall: 9152987821 (Mon–Sat, 8am–10pm IST) | Vandrevala Foundation: 1860-2662-345 (24x7)";
 
 function hasSeriousRiskSignal(text) {
     if (!text || typeof text !== "string") return false;
@@ -60,7 +60,7 @@ app.post("/api/ai/support", async (req, res) => {
                 }))
                 .filter((msg) => msg.content.trim().length > 0)
             : [];
-        const systemPrompt = `You are a warm and supportive mental wellness assistant for college students. Keep language simple, kind, and conversational. Keep replies short (2-5 lines), practical, and easy to act on. Let users chat freely. Validate feelings first, then suggest 1-2 small next steps. Do not diagnose conditions. If user mentions self-harm or immediate danger, clearly advise contacting local emergency services and a trusted person immediately. Use this helpline in crisis: ${HELPLINE_NUMBER}.`;
+        const systemPrompt = `You are a warm and supportive mental wellness assistant for Indian college students. Keep language simple, kind, and conversational. Keep replies short (2-5 lines), practical, and easy to act on. You understand the pressures of Indian college life — competitive exams, JEE/NEET/placement stress, family expectations, hostel life, and academic pressure. Let users chat freely. Validate feelings first, then suggest 1-2 small next steps. Do not diagnose conditions. Reference Indian support systems like talking to a college counsellor, NIMHANS, or iCall when relevant. If user mentions self-harm or immediate danger, clearly advise contacting local emergency services (112) and a trusted person immediately. Use these helplines in crisis: ${HELPLINE_NUMBER}.`;
         const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
 
         const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
