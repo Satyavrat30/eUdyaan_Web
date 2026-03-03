@@ -4,10 +4,53 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const {
+  getConfiguredAdminIdentity,
+  createAdminSession,
+  removeAdminSession,
+  requireAdminSession
+} = require("../utils/adminAuth");
 
 // In-memory store for email verification tokens (use Redis/DB in production)
 const pendingVerifications = new Map(); // token -> { name, email, hashedPassword, expiresAt }
 const passwordResetTokens = new Map(); // token -> { userId, expiresAt }
+const adminLoginBuckets = new Map(); // key -> { count, resetAt }
+const ADMIN_LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const ADMIN_LOGIN_MAX_ATTEMPTS = 8;
+
+function getClientIp(req) {
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip = Array.isArray(forwarded)
+    ? forwarded[0]
+    : (typeof forwarded === "string" ? forwarded.split(",")[0] : req.ip);
+  return String(ip || "unknown").trim();
+}
+
+function consumeAdminLoginAttempt(req, email) {
+  const key = `${getClientIp(req)}|${String(email || "").trim().toLowerCase()}`;
+  const now = Date.now();
+  const current = adminLoginBuckets.get(key);
+
+  if (!current || now >= current.resetAt) {
+    adminLoginBuckets.set(key, { count: 1, resetAt: now + ADMIN_LOGIN_WINDOW_MS });
+    return { limited: false, retryAfterSeconds: 0 };
+  }
+
+  current.count += 1;
+  if (current.count > ADMIN_LOGIN_MAX_ATTEMPTS) {
+    return {
+      limited: true,
+      retryAfterSeconds: Math.max(1, Math.ceil((current.resetAt - now) / 1000))
+    };
+  }
+
+  return { limited: false, retryAfterSeconds: 0 };
+}
+
+function clearAdminLoginAttempt(req, email) {
+  const key = `${getClientIp(req)}|${String(email || "").trim().toLowerCase()}`;
+  adminLoginBuckets.delete(key);
+}
 
 // Email transporter setup (uses env variables)
 function getTransporter() {
@@ -256,12 +299,9 @@ router.post("/reset-password", async (req, res) => {
 });
 
 // ADMIN: Lookup user by anonymousId (for admin use)
-router.get("/admin/lookup-anonymous", async (req, res) => {
+router.get("/admin/lookup-anonymous", requireAdminSession, async (req, res) => {
   try {
-    const { anonymousId, adminKey } = req.query;
-    if (adminKey !== process.env.ADMIN_KEY) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
+    const { anonymousId } = req.query;
     // Reverse the anonymousId hash by iterating all users
     const users = await User.find({}, { name: 1, email: 1, _id: 1 });
     function makeAnonId(seed) {
@@ -275,6 +315,63 @@ router.get("/admin/lookup-anonymous", async (req, res) => {
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
+});
+
+router.post("/admin/login", async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    const configured = getConfiguredAdminIdentity();
+
+    if (!configured.password) {
+      return res.status(500).json({ error: "Admin credentials are not configured on server" });
+    }
+
+    const inputEmail = String(email || "").trim().toLowerCase();
+    const inputPassword = String(password || "").trim();
+
+    const attempt = consumeAdminLoginAttempt(req, inputEmail);
+    if (attempt.limited) {
+      res.setHeader("Retry-After", String(attempt.retryAfterSeconds));
+      return res.status(429).json({ error: "Too many login attempts. Please try again later." });
+    }
+
+    if (!inputEmail || !inputPassword) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    if (inputEmail !== configured.email || inputPassword !== configured.password) {
+      return res.status(401).json({ error: "Invalid admin credentials" });
+    }
+
+    clearAdminLoginAttempt(req, inputEmail);
+
+    const token = createAdminSession(configured.email);
+    return res.json({
+      success: true,
+      token,
+      admin: {
+        email: configured.email,
+        role: "admin"
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/admin/logout", requireAdminSession, async (req, res) => {
+  removeAdminSession(req.admin.token);
+  return res.json({ success: true });
+});
+
+router.get("/admin/me", requireAdminSession, async (req, res) => {
+  return res.json({
+    authenticated: true,
+    admin: {
+      email: req.admin.email,
+      role: "admin"
+    }
+  });
 });
 
 module.exports = router;

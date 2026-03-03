@@ -5,17 +5,23 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const User = require("./models/User");
+const ChatSupportLog = require("./models/ChatSupportLog");
+const RiskAlert = require("./models/RiskAlert");
 const { hasSeriousRiskSignal } = require("./utils/riskSignals");
 
 const app = express();
 const HELPLINE_NUMBER = process.env.HELPLINE_NUMBER || "iCall: 9152987821 (Mon–Sat, 8am–10pm IST) | Vandrevala Foundation: 1860-2662-345 (24x7)";
 const HELPLINE_PRIMARY_NUMBER = process.env.HELPLINE_PRIMARY_NUMBER || "9152987821";
 const ALERT_EMAIL = process.env.ALERT_EMAIL || process.env.EMAIL_USER || "";
+const AI_CLIENT_ALERT_SOURCES = new Set(["ai_support_client_block", "ai_support_reply_flag"]);
 const aiRateWindowMs = 60 * 1000;
 const aiRateMaxRequests = 10;
 const aiRateBuckets = new Map();
+const aiRiskAlertRateMaxRequests = 40;
+const aiRiskAlertBuckets = new Map();
 const aiRateMaxKeys = 5000;
-let aiLastCleanupAt = 0;
+let aiSupportLastCleanupAt = 0;
+let aiRiskAlertLastCleanupAt = 0;
 
 const SUPPORTED_CHAT_LANGUAGES = new Set(["english", "hinglish", "hindi"]);
 
@@ -120,8 +126,8 @@ function aiSupportRateLimiter(req, res, next) {
     const key = getClientIp(req);
     const now = Date.now();
 
-    if (now - aiLastCleanupAt > aiRateWindowMs) {
-        aiLastCleanupAt = now;
+    if (now - aiSupportLastCleanupAt > aiRateWindowMs) {
+        aiSupportLastCleanupAt = now;
         for (const [bucketKey, bucket] of aiRateBuckets.entries()) {
             if (now >= bucket.resetAt) {
                 aiRateBuckets.delete(bucketKey);
@@ -145,6 +151,40 @@ function aiSupportRateLimiter(req, res, next) {
         const retryAfterSeconds = Math.ceil((current.resetAt - now) / 1000);
         res.setHeader("Retry-After", String(Math.max(retryAfterSeconds, 1)));
         return res.status(429).json({ error: "Too many requests. Please wait and try again." });
+    }
+
+    return next();
+}
+
+function aiRiskAlertRateLimiter(req, res, next) {
+    const key = getClientIp(req);
+    const now = Date.now();
+
+    if (now - aiRiskAlertLastCleanupAt > aiRateWindowMs) {
+        aiRiskAlertLastCleanupAt = now;
+        for (const [bucketKey, bucket] of aiRiskAlertBuckets.entries()) {
+            if (now >= bucket.resetAt) {
+                aiRiskAlertBuckets.delete(bucketKey);
+            }
+        }
+    }
+
+    if (!aiRiskAlertBuckets.has(key) && aiRiskAlertBuckets.size >= aiRateMaxKeys) {
+        return res.status(503).json({ error: "Server is busy. Please try again in a moment." });
+    }
+
+    const current = aiRiskAlertBuckets.get(key);
+
+    if (!current || now >= current.resetAt) {
+        aiRiskAlertBuckets.set(key, { count: 1, resetAt: now + aiRateWindowMs });
+        return next();
+    }
+
+    current.count += 1;
+    if (current.count > aiRiskAlertRateMaxRequests) {
+        const retryAfterSeconds = Math.ceil((current.resetAt - now) / 1000);
+        res.setHeader("Retry-After", String(Math.max(retryAfterSeconds, 1)));
+        return res.status(429).json({ error: "Too many risk alert events. Please wait and try again." });
     }
 
     return next();
@@ -178,10 +218,46 @@ const authRoutes = require("./routes/auth");
 const communityRoutes = require("./routes/community");
 const contactRoutes = require("./routes/contact");
 const appointmentRoutes = require("./routes/appointments");
+const adminRoutes = require("./routes/admin");
 app.use("/api/auth", authRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/admin", adminRoutes);
+
+app.post("/api/ai/risk-alert", requireAuthenticatedUser, aiRiskAlertRateLimiter, async (req, res) => {
+    try {
+        const { source = "ai_support_client_block", message = "", triggerTerm = "", metadata = {} } = req.body || {};
+        const normalizedSource = String(source || "").trim().toLowerCase();
+        if (!AI_CLIENT_ALERT_SOURCES.has(normalizedSource)) {
+            return res.status(400).json({ error: "Invalid source" });
+        }
+
+        const normalizedMessage = String(message || "").trim().slice(0, 2000);
+        if (!normalizedMessage) {
+            return res.status(400).json({ error: "Message is required" });
+        }
+
+        const normalizedTrigger = String(triggerTerm || "").trim();
+        if (!hasSeriousRiskSignal(normalizedMessage) && !normalizedTrigger) {
+            return res.status(422).json({ error: "Risk signal not detected" });
+        }
+
+        await RiskAlert.create({
+            source: normalizedSource,
+            userId: req.authUserId,
+            anonymousId: "",
+            clientIp: getClientIp(req),
+            message: normalizedMessage,
+            triggerTerm: normalizedTrigger || "risk_pattern",
+            metadata: (metadata && typeof metadata === "object" && !Array.isArray(metadata)) ? metadata : {}
+        });
+
+        return res.json({ success: true });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+});
 
 app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, async (req, res) => {
     try {
@@ -202,6 +278,17 @@ app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, asyn
                 clientIp: getClientIp(req),
                 at: new Date().toISOString(),
                 message
+            });
+            await RiskAlert.create({
+                source: "ai_support",
+                userId: req.authUserId,
+                anonymousId: "",
+                clientIp: getClientIp(req),
+                message: String(message || ""),
+                triggerTerm: "risk_pattern",
+                metadata: {
+                    language: conversationLanguage
+                }
             });
         }
 
@@ -276,6 +363,16 @@ app.post("/api/ai/support", requireAuthenticatedUser, aiSupportRateLimiter, asyn
         if (serious) {
             reply += `\n\n${getLocalizedCrisisAlert(conversationLanguage)}`;
         }
+
+        await ChatSupportLog.create({
+            userId: req.authUserId,
+            clientIp: getClientIp(req),
+            language: conversationLanguage,
+            message: String(message || ""),
+            reply: String(reply || ""),
+            serious: Boolean(serious)
+        });
+
         return res.json({ reply, serious });
     } catch (error) {
         return res.status(500).json({ error: "AI support error", details: error.message });

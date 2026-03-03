@@ -166,6 +166,25 @@ function closeRedAlertPopup() {
   redAlertModal?.classList.add("hidden");
 }
 
+async function reportCommunityRiskAlert({ source, message, triggerTerm, metadata = {} }) {
+  if (!currentUserId) return;
+  try {
+    await fetchJson(`${API_BASE}/api/community/risk-alert`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: currentUserId,
+        anonymousId: fallbackAnonymousId,
+        source,
+        message,
+        triggerTerm,
+        metadata
+      })
+    });
+  } catch (_) {
+  }
+}
+
 let posts = [];
 let activePostId = null;
 let replyTargetId = null;
@@ -486,6 +505,12 @@ createForm.addEventListener("submit", async (event) => {
 
   const postRiskTerm = detectCommunityRiskTerm(`${title}\n${content}\n${tags.join(" ")}`);
   if (postRiskTerm) {
+    void reportCommunityRiskAlert({
+      source: "community_post_client_block",
+      message: `${title}\n${content}\n${tags.join(" ")}`,
+      triggerTerm: postRiskTerm,
+      metadata: { tags }
+    });
     openRedAlertPopup(postRiskTerm);
     return;
   }
@@ -572,6 +597,15 @@ replyForm.addEventListener("submit", async (event) => {
 
   const replyRiskTerm = detectCommunityRiskTerm(content);
   if (replyRiskTerm) {
+    void reportCommunityRiskAlert({
+      source: "community_reply_client_block",
+      message: content,
+      triggerTerm: replyRiskTerm,
+      metadata: {
+        postId: activePostId,
+        parentReplyId: replyTargetId || ""
+      }
+    });
     openRedAlertPopup(replyRiskTerm);
     return;
   }

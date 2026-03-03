@@ -62,6 +62,37 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
 - Added safer crisis UX: high-risk user messages trigger urgent red guidance flow
 - Added backend risk-signal utility + matrix script for phrase regression checks
 
+### Admin login + dashboard
+
+- Added admin authentication endpoints:
+  - `POST /api/auth/admin/login`
+  - `POST /api/auth/admin/logout`
+  - `GET /api/auth/admin/me`
+- Added admin-protected dashboard endpoints:
+  - `GET /api/admin/dashboard/summary`
+  - `GET /api/admin/dashboard/chats`
+  - `GET /api/admin/dashboard/risk-alerts`
+  - `GET /api/admin/dashboard/community`
+  - `GET /api/admin/dashboard/contacts`
+  - `GET /api/admin/dashboard/appointments`
+- Added AI client risk event ingestion endpoint:
+  - `POST /api/ai/risk-alert`
+- Added admin UI pages:
+  - `/admin/admin-login.html`
+  - `/admin/admin-dashboard.html`
+- Dashboard visibility now includes:
+  - AI chats (who talked, message/reply, language, seriousness)
+  - Risk alerts from AI support and community red-alert blocking
+  - Community posts and replies with user/anonymous IDs
+  - Contact messages and aggregate summary counters
+- Risk alert source filtering in dashboard:
+  - `All Sources`
+  - `AI Assistant Chatbot`
+  - `Community`
+- Improved dashboard reliability:
+  - Fresh API reads on refresh/load (cache-busting + no-store fetch)
+  - Separate rate limiter bucket for AI risk-alert logging to avoid dropped alerts under chat traffic
+
 ### Crisis safety + language behavior (Resources chatbot)
 
 - Shared backend detector in `backend/utils/riskSignals.js`
@@ -82,6 +113,12 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
 - Safer API base handling for file/backend contexts
 - Escaping/sanitization for dynamic rendering and embeds
 - Better resilience for invalid state and report parsing
+
+### Testing upgrades
+
+- Added comprehensive end-to-end API test harness:
+  - `npm run test:hardcore` (root)
+  - `npm run test:hardcore --prefix backend`
 
 ## Tech stack
 
@@ -113,6 +150,8 @@ EMAIL_USER=...
 EMAIL_PASS=...
 FRONTEND_URL=http://localhost:5000
 ADMIN_KEY=...
+ADMIN_EMAIL=admin@eudyaan.local
+ADMIN_PASSWORD=...
 ```
 
 ### 3) Run

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - eUdyaan</title>
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+  <div class="admin-wrap">
+    <div class="admin-card">
+      <div class="admin-header">
+        <div>
+          <h1 class="admin-title">Admin Dashboard</h1>
+          <div id="adminIdentity" class="muted"></div>
+          <div id="dashboardUpdatedAt" class="muted"></div>
+        </div>
+        <div>
+          <button id="adminRefreshBtn" class="admin-btn secondary">Refresh</button>
+          <button id="adminLogoutBtn" class="admin-btn">Logout</button>
+        </div>
+      </div>
+      <div id="summaryGrid" class="admin-grid"></div>
+    </div>
+
+    <section class="admin-section">
+      <div class="section-head">
+        <h2 class="section-title">Risk Alerts</h2>
+        <div class="risk-filter-row">
+          <label for="riskSourceFilter">Source</label>
+          <select id="riskSourceFilter">
+            <option value="all">All Sources</option>
+            <option value="ai_assistant_chatbot">AI Assistant Chatbot</option>
+            <option value="community">Community</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Source</th>
+              <th>User</th>
+              <th>Anonymous ID</th>
+              <th>Trigger</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody id="riskAlertsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section">
+      <h2 class="section-title">Chats</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>User</th>
+              <th>Language</th>
+              <th>Serious</th>
+              <th>Message</th>
+              <th>AI Reply</th>
+            </tr>
+          </thead>
+          <tbody id="chatsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section">
+      <h2 class="section-title">Community Posts & Replies</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Type</th>
+              <th>User</th>
+              <th>Anonymous ID</th>
+              <th>Post/Reply ID</th>
+              <th>Content</th>
+            </tr>
+          </thead>
+          <tbody id="communityBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section" style="padding-bottom:24px;">
+      <h2 class="section-title">Contact Messages</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody id="contactsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section" style="padding-bottom:24px;">
+      <h2 class="section-title">Appointments</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>User</th>
+              <th>Consultant</th>
+              <th>Role</th>
+              <th>Session Type</th>
+              <th>Date</th>
+              <th>Slot</th>
+            </tr>
+          </thead>
+          <tbody id="appointmentsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="./admin-dashboard.js"></script>
+</body>
+</html>

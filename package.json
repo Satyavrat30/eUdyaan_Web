@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "start": "node backend/server.js",
-    "test:risk": "node backend/scripts/risk-signal-matrix.js"
+    "test:risk": "node backend/scripts/risk-signal-matrix.js",
+    "test:hardcore": "node backend/scripts/hardcore-api-test.js"
   }
 }

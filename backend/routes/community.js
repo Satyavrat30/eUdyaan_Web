@@ -2,9 +2,15 @@ const express = require("express");
 const CommunityPost = require("../models/CommunityPost");
 const User = require("../models/User");
 const { hasSeriousRiskSignal } = require("../utils/riskSignals");
+const RiskAlert = require("../models/RiskAlert");
 
 const router = express.Router();
 const COMMUNITY_RED_ALERT_ERROR = "RED_ALERT_TRIGGERED: Posting blocked due to self-harm risk signal.";
+const COMMUNITY_CLIENT_ALERT_SOURCES = new Set([
+  "community_post_client_block",
+  "community_reply_client_block",
+  "community_client"
+]);
 
 const actionWindowMs = 60 * 1000;
 const actionMaxRequests = 12;
@@ -144,6 +150,7 @@ function getUserVoteFromPost(doc, voterKey) {
 function mapPost(doc, voterKey = "") {
   return {
     id: String(doc._id),
+    userId: doc.userId || "",
     anonymousId: doc.anonymousId,
     title: doc.title,
     content: doc.content,
@@ -212,6 +219,42 @@ router.get("/posts", async (req, res) => {
   }
 });
 
+router.post("/risk-alert", requireAuthenticatedUser, postActionLimiter, async (req, res) => {
+  try {
+    const { anonymousId, source = "community_client", message = "", triggerTerm = "", metadata = {} } = req.body || {};
+    const userId = req.authUserId;
+    const resolvedAnonymousId = await resolveAnonymousId(userId, req, anonymousId);
+
+    const normalizedMessage = String(message || "").trim().slice(0, 2000);
+    if (!normalizedMessage) {
+      return res.status(400).json({ error: "message is required" });
+    }
+
+    const normalizedSource = String(source || "community_client").trim().toLowerCase();
+    if (!COMMUNITY_CLIENT_ALERT_SOURCES.has(normalizedSource)) {
+      return res.status(400).json({ error: "Invalid source" });
+    }
+
+    if (!hasSeriousRiskSignal(normalizedMessage)) {
+      return res.status(422).json({ error: "Risk signal not detected" });
+    }
+
+    await RiskAlert.create({
+      source: normalizedSource,
+      userId: String(userId || ""),
+      anonymousId: String(resolvedAnonymousId || ""),
+      clientIp: getClientKey(req),
+      message: normalizedMessage,
+      triggerTerm: String(triggerTerm || "risk_pattern").trim() || "risk_pattern",
+      metadata: (metadata && typeof metadata === "object" && !Array.isArray(metadata)) ? metadata : {}
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 router.post("/posts", requireAuthenticatedUser, postActionLimiter, async (req, res) => {
   try {
     const { anonymousId, title, content, tags = [], mediaName = "" } = req.body;
@@ -232,10 +275,22 @@ router.post("/posts", requireAuthenticatedUser, postActionLimiter, async (req, r
 
     const postRiskText = `${String(title || "")}\n${String(content || "")}\n${cleanedTags.join(" ")}`;
     if (hasSeriousRiskSignal(postRiskText)) {
+      await RiskAlert.create({
+        source: "community_post",
+        userId: String(userId || ""),
+        anonymousId: String(resolvedAnonymousId || ""),
+        clientIp: getClientKey(req),
+        message: postRiskText,
+        triggerTerm: "risk_pattern",
+        metadata: {
+          tags: cleanedTags
+        }
+      });
       return res.status(422).json({ error: COMMUNITY_RED_ALERT_ERROR });
     }
 
     const post = await CommunityPost.create({
+      userId: String(userId || ""),
       anonymousId: String(resolvedAnonymousId).trim(),
       title: String(title).trim(),
       content: String(content).trim(),
@@ -264,6 +319,18 @@ router.post("/posts/:postId/replies", requireAuthenticatedUser, postActionLimite
     }
 
     if (hasSeriousRiskSignal(String(content || ""))) {
+      await RiskAlert.create({
+        source: "community_reply",
+        userId: String(userId || ""),
+        anonymousId: String(resolvedAnonymousId || ""),
+        clientIp: getClientKey(req),
+        message: String(content || ""),
+        triggerTerm: "risk_pattern",
+        metadata: {
+          postId: String(postId || ""),
+          parentReplyId: parentReplyId ? String(parentReplyId) : ""
+        }
+      });
       return res.status(422).json({ error: COMMUNITY_RED_ALERT_ERROR });
     }
 
@@ -273,6 +340,7 @@ router.post("/posts/:postId/replies", requireAuthenticatedUser, postActionLimite
     }
 
     const newReply = {
+      userId: String(userId || ""),
       anonymousId: String(resolvedAnonymousId).trim(),
       content: String(content).trim(),
       replies: []

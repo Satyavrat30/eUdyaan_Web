@@ -743,6 +743,30 @@ async function askAi(message, preferredLanguage) {
   return data;
 }
 
+async function reportAiRiskAlert({ source, message, triggerTerm, metadata = {} }) {
+  if (!currentUserId) return;
+  try {
+    const response = await fetch(`${API_BASE}/api/ai/risk-alert`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: currentUserId,
+        source,
+        message,
+        triggerTerm,
+        metadata
+      })
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload?.error || `Risk alert logging failed (${response.status})`);
+    }
+  } catch (_) {
+    return false;
+  }
+  return true;
+}
+
 async function handleUserMessage(message) {
   if (!message) return;
   if (isAssistantBusy) return;
@@ -760,6 +784,15 @@ async function handleUserMessage(message) {
   appendMessage("user", message, true, Boolean(userCriticalTerm));
   if (userCriticalTerm) {
     registerCriticalEvent("user", message, userCriticalTerm);
+    await reportAiRiskAlert({
+      source: "ai_support_client_block",
+      message,
+      triggerTerm: userCriticalTerm,
+      metadata: {
+        conversationLanguage: userLanguage,
+        phase: "user_input_block"
+      }
+    });
     appendMessage(
       "ai",
       textLabel.crisisGuidance,
@@ -783,6 +816,15 @@ async function handleUserMessage(message) {
     appendMessage("ai", reply, true, aiCritical);
     if (aiCriticalTerm) {
       registerCriticalEvent("assistant", reply, aiCriticalTerm);
+      await reportAiRiskAlert({
+        source: "ai_support_reply_flag",
+        message: reply,
+        triggerTerm: aiCriticalTerm,
+        metadata: {
+          conversationLanguage: userLanguage,
+          phase: "assistant_reply_flag"
+        }
+      });
     }
 
     if (aiCritical) {
