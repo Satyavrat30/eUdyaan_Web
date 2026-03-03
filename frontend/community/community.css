@@ -536,6 +536,49 @@ nav .active {
   font-size: 12px;
 }
 
+.red-alert-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1400;
+  padding: 20px;
+}
+
+.red-alert-panel {
+  width: min(520px, 100%);
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.2);
+}
+
+.red-alert-panel h3 {
+  margin: 0;
+  color: #b91c1c;
+}
+
+.red-alert-panel p {
+  margin: 10px 0 0;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.red-alert-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.red-alert-actions a,
+.red-alert-actions button {
+  text-decoration: none;
+}
+
 .hidden {
   display: none;
 }

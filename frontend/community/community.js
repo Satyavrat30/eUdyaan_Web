@@ -34,12 +34,19 @@ const replyForm = document.getElementById("replyForm");
 const replyInput = document.getElementById("replyInput");
 const replyContext = document.getElementById("replyContext");
 const cancelReplyTarget = document.getElementById("cancelReplyTarget");
+const redAlertModal = document.getElementById("redAlertModal");
+const redAlertText = document.getElementById("redAlertText");
+const redAlertCall = document.getElementById("redAlertCall");
+const redAlertConsult = document.getElementById("redAlertConsult");
+const redAlertClose = document.getElementById("redAlertClose");
 
 const backendHost = window.location.hostname || "localhost";
 // If served directly by the backend (port 5000) use relative URLs, otherwise point to backend
 const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:") 
   ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
   : `http://${backendHost}:5000`;
+const HELPLINE_CALL_NUMBER = "9152987821";
+const CONSULT_DOCTOR_LINK = "../appointment/appointment.html";
 
 const profile = window.EudyaanSession?.getProfile?.() || null;
 const currentUserId = profile?.id || "";
@@ -72,6 +79,91 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+const COMMUNITY_CRISIS_PATTERNS = [
+  /\b(kms|kys)\b/i,
+  /\bsuicide\b/i,
+  /\bkill\s*my\s*self\b/i,
+  /\btake\s*my\s*life\b/i,
+  /\btake\s*my\s*own\s*life\b/i,
+  /\bwant\s*to\s*die\b/i,
+  /\bdon'?t\s*want\s*to\s*live\b/i,
+  /\bdo\s*not\s*want\s*to\s*live\b/i,
+  /\bno\s*reason\s*to\s*live\b/i,
+  /\bbetter\s*off\s*dead\b/i,
+  /\bwish\s*i\s*was\s*dead\b/i,
+  /\bcan'?t\s*go\s*on\b/i,
+  /\bnot\s*worth\s*living\b/i,
+  /\bend\s*my\s*life\b/i,
+  /\bend\s*it\s*all\b/i,
+  /\bself[- ]?harm\b/i,
+  /\bhurt\s*myself\b/i,
+  /\bquit\s*life\b/i,
+  /\bquit\s*living\b/i,
+  /\bmurder\b/i,
+  /\bkill\b/i,
+  /\bmarna\b/i,
+  /\bmar\s*jana\b/i,
+  /\bjeena\s*nahi\b/i,
+  /\bmujhe\s*marna\s*hai\b/i,
+  /\bmujhe\s*mar\s*jana\s*hai\b/i,
+  /\bjaan\s*dena\b/i,
+  /\bapni\s*jaan\s*lena\b/i,
+  /\bkhud\s*ko\s*mar(na|\s*dena)\b/i,
+  /\bsuicidal\b/i,
+  /\bfansi\b/i,
+  /\bfasi\b/i,
+  /\bfaansi\b/i,
+  /\bphansi\b/i,
+  /\bphaansi\b/i,
+  /\bf[ae]?a?n?s[iy]\s*(lagana|lgana|lagaana|lagane|lgane)\b/i,
+  /\blatakna\b/i,
+  /\bphanda\b/i,
+  /\bzeher\b/i,
+  /\boverdose\b/i,
+  /\bmaar\s*do\b/i,
+  /\bmar\s*do\b/i,
+  /आत्महत्या/i,
+  /खुदकुशी/i,
+  /फांसी/i,
+  /फाँसी/i,
+  /फंदा/i,
+  /मर\s*जाना/i,
+  /मरना\s*है/i,
+  /जीना\s*नहीं/i,
+  /जान\s*दे\s*(दूंगा|दूँगा|दूंगी|दूँगी|दुंगी|देना)/i,
+  /खुद\s*को\s*मार/i,
+  /मर\s*डाल/i,
+  /मुझे\s*मरना\s*है/i
+];
+
+function detectCommunityRiskTerm(text) {
+  const value = String(text || "");
+  for (const pattern of COMMUNITY_CRISIS_PATTERNS) {
+    const match = value.match(pattern);
+    if (match) return match[0];
+  }
+  return null;
+}
+
+function openRedAlertPopup(triggerText) {
+  if (redAlertText) {
+    redAlertText.textContent = `RED ALERT TRIGGERED. This content may indicate immediate self-harm risk and cannot be posted. Triggered phrase: "${triggerText}". Please use immediate support options.`;
+  }
+
+  if (redAlertCall) {
+    redAlertCall.href = `tel:${HELPLINE_CALL_NUMBER}`;
+  }
+  if (redAlertConsult) {
+    redAlertConsult.href = CONSULT_DOCTOR_LINK;
+  }
+
+  redAlertModal?.classList.remove("hidden");
+}
+
+function closeRedAlertPopup() {
+  redAlertModal?.classList.add("hidden");
 }
 
 let posts = [];
@@ -392,6 +484,12 @@ createForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  const postRiskTerm = detectCommunityRiskTerm(`${title}\n${content}\n${tags.join(" ")}`);
+  if (postRiskTerm) {
+    openRedAlertPopup(postRiskTerm);
+    return;
+  }
+
   try {
     const data = await fetchJson(`${API_BASE}/api/community/posts`, {
       method: "POST",
@@ -411,6 +509,10 @@ createForm.addEventListener("submit", async (event) => {
     await loadPosts();
     openDrawer(data.post.id);
   } catch (error) {
+    if (String(error.message || "").includes("RED_ALERT_TRIGGERED")) {
+      openRedAlertPopup("self-harm risk");
+      return;
+    }
     alert(`Failed to create post: ${error.message}`);
   }
 });
@@ -468,6 +570,12 @@ replyForm.addEventListener("submit", async (event) => {
   const content = replyInput.value.trim();
   if (!content) return;
 
+  const replyRiskTerm = detectCommunityRiskTerm(content);
+  if (replyRiskTerm) {
+    openRedAlertPopup(replyRiskTerm);
+    return;
+  }
+
   try {
     const data = await fetchJson(`${API_BASE}/api/community/posts/${activePostId}/replies`, {
       method: "POST",
@@ -487,7 +595,18 @@ replyForm.addEventListener("submit", async (event) => {
     openDrawer(updated.id);
     renderFeed();
   } catch (error) {
+    if (String(error.message || "").includes("RED_ALERT_TRIGGERED")) {
+      openRedAlertPopup("self-harm risk");
+      return;
+    }
     alert(`Failed to add reply: ${error.message}`);
+  }
+});
+
+redAlertClose?.addEventListener("click", closeRedAlertPopup);
+redAlertModal?.addEventListener("click", (event) => {
+  if (event.target === redAlertModal) {
+    closeRedAlertPopup();
   }
 });
 

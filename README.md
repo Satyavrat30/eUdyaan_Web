@@ -40,6 +40,12 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
 - Guest fallback identity support
 - XSS hardening in feed/thread rendering
 - Post/reply write rate limiting
+- Self-harm safety enforcement for posts and replies:
+  - Detects high-risk/self-harm phrases on submit
+  - Shows `RED ALERT TRIGGERED` popup with support text
+  - Includes quick actions: `Call Helpline` and `Consult Doctor`
+  - Blocks submission so risky post/reply is not published
+  - Server-side validation also rejects risky content (`422`, `RED_ALERT_TRIGGERED`) to prevent bypass
 - Voting upgraded to Reddit-style behavior:
   - Upvote and downvote arrows
   - Toggle off by clicking the same vote again

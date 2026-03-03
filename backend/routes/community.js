@@ -1,8 +1,10 @@
 const express = require("express");
 const CommunityPost = require("../models/CommunityPost");
 const User = require("../models/User");
+const { hasSeriousRiskSignal } = require("../utils/riskSignals");
 
 const router = express.Router();
+const COMMUNITY_RED_ALERT_ERROR = "RED_ALERT_TRIGGERED: Posting blocked due to self-harm risk signal.";
 
 const actionWindowMs = 60 * 1000;
 const actionMaxRequests = 12;
@@ -228,6 +230,11 @@ router.post("/posts", requireAuthenticatedUser, postActionLimiter, async (req, r
       return res.status(400).json({ error: "title, content, and at least one tag are required" });
     }
 
+    const postRiskText = `${String(title || "")}\n${String(content || "")}\n${cleanedTags.join(" ")}`;
+    if (hasSeriousRiskSignal(postRiskText)) {
+      return res.status(422).json({ error: COMMUNITY_RED_ALERT_ERROR });
+    }
+
     const post = await CommunityPost.create({
       anonymousId: String(resolvedAnonymousId).trim(),
       title: String(title).trim(),
@@ -254,6 +261,10 @@ router.post("/posts/:postId/replies", requireAuthenticatedUser, postActionLimite
 
     if (!resolvedAnonymousId || !content) {
       return res.status(400).json({ error: "content is required" });
+    }
+
+    if (hasSeriousRiskSignal(String(content || ""))) {
+      return res.status(422).json({ error: COMMUNITY_RED_ALERT_ERROR });
     }
 
     const post = await CommunityPost.findById(postId);
