@@ -5,6 +5,7 @@ const ContactMessage = require("../models/ContactMessage");
 const Appointment = require("../models/Appointment");
 const ChatSupportLog = require("../models/ChatSupportLog");
 const RiskAlert = require("../models/RiskAlert");
+const { detectRiskSignal } = require("../utils/riskSignals");
 const { requireAdminSession } = require("../utils/adminAuth");
 
 const router = express.Router();
@@ -35,6 +36,32 @@ function classifyRiskSource(source) {
     return "ai_assistant_chatbot";
   }
   return "community";
+}
+
+function normalizeRiskCategory(value) {
+  const category = String(value || "").trim().toLowerCase();
+  if (category === "violence") return "violence";
+  if (category === "self_harm" || category === "self-harm") return "self_harm";
+  return "high_risk";
+}
+
+function resolveRiskCategory(alert) {
+  const metadataCategory = normalizeRiskCategory(alert?.metadata?.riskCategory);
+  if (metadataCategory !== "high_risk") {
+    return metadataCategory;
+  }
+
+  const fromMessage = detectRiskSignal(String(alert?.message || ""));
+  if (fromMessage.matched) {
+    return fromMessage.category;
+  }
+
+  const fromTrigger = detectRiskSignal(String(alert?.triggerTerm || ""));
+  if (fromTrigger.matched) {
+    return fromTrigger.category;
+  }
+
+  return "high_risk";
 }
 
 async function buildUserMap(userIds) {
@@ -179,6 +206,7 @@ router.get("/dashboard/risk-alerts", async (req, res) => {
         id: String(alert._id),
         source: alert.source,
         sourceType: classifyRiskSource(alert.source),
+        riskCategory: resolveRiskCategory(alert),
         userId,
         user: userMap.get(userId) || null,
         anonymousId: alert.anonymousId || "",

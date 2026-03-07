@@ -188,7 +188,8 @@ const CHAT_LABELS = {
   english: {
     welcome: "Hey, I am here with you. Talk freely in your own words, and we will handle one step at a time.",
     sessionCleared: "Session cleared. How is your mood right now?",
-    crisisGuidance: "Please stay calm. This language can be harmful for you right now. Take slow deep breaths, reach out to a trusted person, and contact a helpline or doctor immediately.",
+    crisisGuidance: "This sounds very heavy, and you do not have to handle it alone. Please call a trusted person or your college counsellor right now, then contact a helpline immediately.",
+    violenceGuidance: "I cannot help with hurting anyone. Please step away from the situation now, take 10 slow breaths, and call a trusted person or counsellor immediately. If you may lose control, call 112 right now.",
     tooFast: "You are sending requests too fast. Please wait a moment and try again.",
     serverBusy: "Server is currently busy. Please try again in a minute.",
     cannotReach: "I cannot connect to server. Start backend: cd backend && npm start",
@@ -201,7 +202,8 @@ const CHAT_LABELS = {
   hinglish: {
     welcome: "Hey, main aapke saath hoon. Aap apne words mein freely baat karo, hum step by step handle karenge.",
     sessionCleared: "Session clear ho gaya. Abhi aapka mood kaisa hai?",
-    crisisGuidance: "Please calm rahiye. Ye language abhi aapke liye harmful ho sakti hai. Dheere deep breaths lijiye, kisi trusted person se baat kijiye, aur turant helpline ya doctor se contact kijiye.",
+    crisisGuidance: "Aap abhi bahut heavy feel kar rahe ho, aur aapko ye akela handle nahi karna hai. Abhi turant kisi trusted person ya college counsellor ko call karo, phir helpline se baat karo.",
+    violenceGuidance: "Main kisi ko nuksan pahunchane mein help nahi kar sakta. Abhi situation se thoda door ho jao, 10 deep breaths lo, aur turant trusted person ya counsellor ko call karo. Control slip ho raha ho to 112 call karo.",
     tooFast: "Aap bahut fast requests bhej rahe ho. Thoda wait karke phir try karo.",
     serverBusy: "Server abhi busy hai. Ek minute baad try karo.",
     cannotReach: "Main server se connect nahi kar pa raha. Backend start karo: cd backend && npm start",
@@ -214,7 +216,8 @@ const CHAT_LABELS = {
   hindi: {
     welcome: "मैं आपके साथ हूँ। आप अपने शब्दों में खुलकर बात करें, हम एक-एक कदम साथ में संभालेंगे।",
     sessionCleared: "सेशन साफ़ हो गया। अभी आपका मूड कैसा है?",
-    crisisGuidance: "कृपया शांत रहें। यह भाषा अभी आपके लिए हानिकारक हो सकती है। धीरे-धीरे गहरी साँस लें, किसी भरोसेमंद व्यक्ति से बात करें, और तुरंत हेल्पलाइन या डॉक्टर से संपर्क करें।",
+    crisisGuidance: "यह बहुत भारी लग सकता है, और आपको इसे अकेले नहीं संभालना है। अभी किसी भरोसेमंद व्यक्ति या कॉलेज काउंसलर को कॉल करें, फिर तुरंत हेल्पलाइन से बात करें।",
+    violenceGuidance: "मैं किसी को नुकसान पहुँचाने में मदद नहीं कर सकता। कृपया तुरंत स्थिति से दूर जाएँ, 10 गहरी साँस लें, और किसी भरोसेमंद व्यक्ति या काउंसलर को कॉल करें। अगर नियंत्रण छूटने का डर हो तो तुरंत 112 पर कॉल करें।",
     tooFast: "आप बहुत तेज़ी से रिक्वेस्ट भेज रहे हैं। कृपया थोड़ा रुककर फिर कोशिश करें।",
     serverBusy: "सर्वर अभी व्यस्त है। कृपया एक मिनट बाद फिर कोशिश करें।",
     cannotReach: "मैं सर्वर से कनेक्ट नहीं कर पा रहा हूँ। बैकएंड शुरू करें: cd backend && npm start",
@@ -298,7 +301,7 @@ const ISSUE_PATTERNS = {
   self_esteem: ["confidence", "self-esteem", "not enough", "compare"]
 };
 
-const CRISIS_PATTERNS = [
+const SELF_HARM_PATTERNS = [
   /\b(kms|kys)\b/i,
   /\bsuicide\b/i,
   /\bkill\s*my\s*self\b/i,
@@ -319,8 +322,6 @@ const CRISIS_PATTERNS = [
   /\bquit life\b/i,
   /\bquit living\b/i,
   /\bend it all\b/i,
-  /\bmurder\b/i,
-  /\bkill\b/i,
   /\bmarna\b/i,
   /\bmar\s*jana\b/i,
   /\bjeena\s*nahi\b/i,
@@ -341,8 +342,6 @@ const CRISIS_PATTERNS = [
   /\bphanda\b/i,
   /\bzeher\b/i,
   /\boverdose\b/i,
-  /\bmaar\s*do\b/i,
-  /\bmar\s*do\b/i,
   /i want to die/i,
   /आत्महत्या/i,
   /खुदकुशी/i,
@@ -357,6 +356,51 @@ const CRISIS_PATTERNS = [
   /मर\s*डाल/i,
   /मुझे\s*मरना\s*है/i
 ];
+
+const VIOLENCE_PATTERNS = [
+  /\bplan\s*(a|an)?\s*(bomb|blast|attack)\b/i,
+  /\bplant\s*(a|an)?\s*bomb\b/i,
+  /\buse\s*(a|an)?\s*bomb\b/i,
+  /\bbomb\s*(the|this|a|my)?\s*(campus|college|school|building|class|hostel)\b/i,
+  /\b(blast|explode|blow\s*up)\s*(the|this|a|my)?\s*(campus|college|school|building|class|hostel|bus)\b/i,
+  /\bshoot\s*(them|him|her|people|everyone|students?|classmates?|teacher|teachers)\b/i,
+  /\bstab\s*(them|him|her|someone|people)\b/i,
+  /\bkill\s*(them|him|her|everyone|people|students?|classmates?|teacher|teachers)\b/i,
+  /\bmurder\b/i,
+  /\bmaar\s*do\b/i,
+  /\bmar\s*do\b/i,
+  /\bcampus\s*ko\s*bomb\s*se\s*udaa?\s*(du|dun|dunga|dungi)\b/i,
+  /\bbomb\s*(se)?\s*udaa?\s*(du|dun|dunga|dungi)\b/i,
+  /\bbomb\s*rakh\s*(du|dun|dunga|dungi)\b/i,
+  /\b(campus|college|school|hostel|class)\s*ko\s*(udaa?|jala)\s*(du|dun|dunga|dungi)\b/i,
+  /\b(sabko|logon\s*ko|students?|classmates?|teacher|teachers)\s*maar\s*(du|dun|dunga|dungi)\b/i,
+  /बम\s*(से)?\s*(उड़ा|फोड़)/i,
+  /कैंपस\s*को\s*बम\s*से\s*उड़ा/i,
+  /(सबको|लोगों\s*को|छात्रों\s*को|टीचर\s*को)\s*मार\s*(दूंगा|दूँगा|दूंगी|दूँगी|दू)/i
+];
+
+function detectPatternMatch(text, patterns) {
+  const value = String(text || "");
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (match) return match[0];
+  }
+  return "";
+}
+
+function detectRiskSignal(text) {
+  const selfHarmTerm = detectPatternMatch(text, SELF_HARM_PATTERNS);
+  if (selfHarmTerm) {
+    return { category: "self_harm", term: selfHarmTerm };
+  }
+
+  const violenceTerm = detectPatternMatch(text, VIOLENCE_PATTERNS);
+  if (violenceTerm) {
+    return { category: "violence", term: violenceTerm };
+  }
+
+  return null;
+}
 
 function getEmptyState() {
   return {
@@ -447,19 +491,23 @@ function closeModal() {
   modalContent.innerHTML = "";
 }
 
-function detectCriticalTerm(text) {
-  const value = String(text || "");
-  for (const pattern of CRISIS_PATTERNS) {
-    const match = value.match(pattern);
-    if (match) return match[0];
-  }
-  return null;
+function getGuidanceByCategory(textLabel, category) {
+  return category === "violence"
+    ? (textLabel.violenceGuidance || textLabel.crisisGuidance)
+    : textLabel.crisisGuidance;
 }
 
-function registerCriticalEvent(source, text, term) {
+function formatRiskTypeLabel(category) {
+  if (category === "violence") return "VIOLENCE";
+  if (category === "self_harm") return "SELF_HARM";
+  return "HIGH_RISK";
+}
+
+function registerCriticalEvent(source, text, term, category = "") {
   state.criticalEvents.push({
     at: new Date().toISOString(),
     source,
+    category,
     term,
     text
   });
@@ -469,10 +517,11 @@ function registerCriticalEvent(source, text, term) {
   saveState();
 }
 
-function renderMessage(role, text, critical = false) {
+function renderMessage(role, text, critical = false, criticalType = "") {
   const div = document.createElement("div");
   div.className = `msg ${role}${critical ? " critical" : ""}`;
-  div.textContent = critical ? `[RED ALERT] ${text}` : text;
+  const typeLabel = formatRiskTypeLabel(String(criticalType || "").toLowerCase());
+  div.textContent = critical ? `[RED ALERT - ${typeLabel}] ${text}` : text;
 
   if (critical && role === "ai") {
     const actionRow = document.createElement("div");
@@ -536,12 +585,12 @@ function setAssistantBusy(busy) {
   }
 }
 
-function appendMessage(role, text, persist = true, critical = false) {
-  renderMessage(role, text, critical);
+function appendMessage(role, text, persist = true, critical = false, criticalType = "") {
+  renderMessage(role, text, critical, criticalType);
 
   if (persist && (role === "user" || role === "ai")) {
     const mappedRole = role === "ai" ? "assistant" : "user";
-    state.history.push({ role: mappedRole, content: text, critical });
+    state.history.push({ role: mappedRole, content: text, critical, criticalType: String(criticalType || "") });
     if (state.history.length > 20) {
       state.history = state.history.slice(-20);
     }
@@ -645,7 +694,7 @@ function formatReportText(report) {
     ? report.importantPoints.map((p, i) => `${i + 1}. ${p.userText}`).join("\n")
     : "No key points captured yet";
   const alertText = report.criticalEvents.length
-    ? report.criticalEvents.map((a, i) => `${i + 1}. [${a.source}] term: "${a.term}" at ${a.at}\n   text: ${a.text}`).join("\n")
+    ? report.criticalEvents.map((a, i) => `${i + 1}. [${a.source}] type: ${formatRiskTypeLabel(String(a.category || "").toLowerCase())} term: "${a.term}" at ${a.at}\n   text: ${a.text}`).join("\n")
     : "No red alerts detected.";
 
   return `THIS IS REPORT
@@ -780,24 +829,28 @@ async function handleUserMessage(message) {
   const userLanguage = preferredConversationLanguage;
   const textLabel = labelsForLanguage(userLanguage);
 
-  const userCriticalTerm = detectCriticalTerm(message);
-  appendMessage("user", message, true, Boolean(userCriticalTerm));
-  if (userCriticalTerm) {
-    registerCriticalEvent("user", message, userCriticalTerm);
+  const userRiskSignal = detectRiskSignal(message);
+  const userCriticalTerm = userRiskSignal?.term || "";
+  const userRiskCategory = userRiskSignal?.category || "";
+  appendMessage("user", message, true, Boolean(userRiskSignal), userRiskCategory);
+  if (userRiskSignal) {
+    registerCriticalEvent("user", message, userCriticalTerm, userRiskCategory);
     await reportAiRiskAlert({
       source: "ai_support_client_block",
       message,
       triggerTerm: userCriticalTerm,
       metadata: {
         conversationLanguage: userLanguage,
-        phase: "user_input_block"
+        phase: "user_input_block",
+        riskCategory: userRiskSignal.category
       }
     });
     appendMessage(
       "ai",
-      textLabel.crisisGuidance,
+      getGuidanceByCategory(textLabel, userRiskSignal.category),
       true,
-      true
+      true,
+      userRiskCategory
     );
     state.seriousCount += 1;
     saveState();
@@ -811,18 +864,21 @@ async function handleUserMessage(message) {
     setAssistantBusy(true);
     const result = await askAi(message, userLanguage);
     const reply = result.reply || textLabel.fallbackReply;
-    const aiCriticalTerm = detectCriticalTerm(reply);
-    const aiCritical = Boolean(result.serious || aiCriticalTerm);
-    appendMessage("ai", reply, true, aiCritical);
+    const aiRiskSignal = detectRiskSignal(reply);
+    const aiCriticalTerm = aiRiskSignal?.term || "";
+    const aiCriticalCategory = aiRiskSignal?.category || (result.serious ? String(result.riskCategory || "self_harm") : "none");
+    const aiCritical = Boolean(result.serious || aiRiskSignal);
+    appendMessage("ai", reply, true, aiCritical, aiCriticalCategory);
     if (aiCriticalTerm) {
-      registerCriticalEvent("assistant", reply, aiCriticalTerm);
+      registerCriticalEvent("assistant", reply, aiCriticalTerm, aiCriticalCategory);
       await reportAiRiskAlert({
         source: "ai_support_reply_flag",
         message: reply,
         triggerTerm: aiCriticalTerm,
         metadata: {
           conversationLanguage: userLanguage,
-          phase: "assistant_reply_flag"
+          phase: "assistant_reply_flag",
+          riskCategory: aiCriticalCategory
         }
       });
     }
@@ -934,7 +990,7 @@ if (window.location.hash === "#report") {
 if (state.history.length) {
   state.history.forEach((item) => {
     const role = item.role === "assistant" ? "ai" : "user";
-    renderMessage(role, item.content, Boolean(item.critical));
+    renderMessage(role, item.content, Boolean(item.critical), String(item.criticalType || ""));
   });
 } else {
   appendMessage("ai", labelsForLanguage(preferredConversationLanguage).welcome, false);

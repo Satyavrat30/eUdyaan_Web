@@ -21,10 +21,15 @@ const MATRIX = [
   { text: "फांसी लगा लूंगा", expected: true },
   { text: "फाँसी लगानी है", expected: true },
   { text: "जीना नहीं चाहता", expected: true },
+  { text: "mei campus ko bomb se udaa du", expected: true },
+  { text: "campus ko bomb se uda dunga", expected: true },
+  { text: "I will plant a bomb in college", expected: true },
+  { text: "I will blow up the campus", expected: true },
   { text: "exam stress ho raha hai", expected: false },
   { text: "I am sad and anxious", expected: false },
   { text: "I feel lonely today", expected: false },
   { text: "Need help with panic attacks", expected: false },
+  { text: "I bombed my exam", expected: false },
   { text: "My roommate is killing my vibe", expected: false },
   { text: "This assignment is killing me", expected: false }
 ];

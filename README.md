@@ -60,6 +60,8 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
 - Prompt/system behavior tuned for Indian student context and crisis guidance
 - Added stronger high-risk phrase detection (English, Hinglish, and Hindi)
 - Added safer crisis UX: high-risk user messages trigger urgent red guidance flow
+- Added violence-intent detection (e.g., bomb/attack threats) with immediate de-escalation guidance
+- Humanized crisis messaging (less robotic template text, language-matched support tone)
 - Added backend risk-signal utility + matrix script for phrase regression checks
 
 ### Admin login + dashboard
@@ -119,6 +121,11 @@ eUdyaan is a student-focused mental wellness platform with resources, AI support
 - Added comprehensive end-to-end API test harness:
   - `npm run test:hardcore` (root)
   - `npm run test:hardcore --prefix backend`
+- Added browser-driven UI click-through checklist coverage for:
+  - Auth and contact form submits
+  - Resources chatbot red-alert visual labels (`VIOLENCE`)
+  - Community red-alert popup labels (`VIOLENCE`, `SELF_HARM`)
+  - Admin risk-alert table `Type` column values (`VIOLENCE`, `SELF_HARM`, `HIGH_RISK`)
 
 ## Tech stack
 
@@ -181,3 +188,36 @@ Run this after updating safety patterns:
 ```bash
 npm run test:risk
 ```
+
+Run full integration API checks:
+
+```bash
+npm run test:hardcore
+```
+
+## Browser UI click-through checklist
+
+Use this checklist for browser-driven validation after backend is running:
+
+1. **Signup + Login forms**
+  - Create a new account on `/signup.html`
+  - Login on `/login.html`
+  - Expect successful redirect/session persistence
+2. **Resources chatbot red-alert visual**
+  - Open `/resources/resources.html`
+  - Submit high-risk violence phrase (example: `mei campus ko bomb se udaa du`)
+  - Expect chat message label: `RED ALERT - VIOLENCE`
+3. **Community red-alert popup visuals**
+  - Open `/community/community.html`
+  - Submit violence high-risk post text
+  - Expect modal text with `RED ALERT - VIOLENCE`
+  - Submit self-harm high-risk post text
+  - Expect modal text with `RED ALERT - SELF_HARM`
+4. **Contact form submit**
+  - Open `/contact/contact.html` while logged in
+  - Submit valid form values
+  - Expect success message in-page
+5. **Admin dashboard risk type visibility**
+  - Login at `/admin/admin-login.html`
+  - Open `/admin/admin-dashboard.html`
+  - In `Risk Alerts`, verify `Type` column exists and rows show: `VIOLENCE`, `SELF_HARM`, or `HIGH_RISK`

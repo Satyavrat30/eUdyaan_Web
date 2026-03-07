@@ -1,16 +1,21 @@
 const express = require("express");
 const CommunityPost = require("../models/CommunityPost");
 const User = require("../models/User");
-const { hasSeriousRiskSignal } = require("../utils/riskSignals");
+const { detectRiskSignal } = require("../utils/riskSignals");
 const RiskAlert = require("../models/RiskAlert");
 
 const router = express.Router();
-const COMMUNITY_RED_ALERT_ERROR = "RED_ALERT_TRIGGERED: Posting blocked due to self-harm risk signal.";
 const COMMUNITY_CLIENT_ALERT_SOURCES = new Set([
   "community_post_client_block",
   "community_reply_client_block",
   "community_client"
 ]);
+
+function getCommunityRedAlertError(riskCategory = "self_harm") {
+  const category = riskCategory === "violence" ? "violence" : "self_harm";
+  const label = category === "violence" ? "violence risk signal" : "self-harm risk signal";
+  return `RED_ALERT_TRIGGERED:${category}: Posting blocked due to ${label}.`;
+}
 
 const actionWindowMs = 60 * 1000;
 const actionMaxRequests = 12;
@@ -235,8 +240,14 @@ router.post("/risk-alert", requireAuthenticatedUser, postActionLimiter, async (r
       return res.status(400).json({ error: "Invalid source" });
     }
 
-    if (!hasSeriousRiskSignal(normalizedMessage)) {
+    const riskSignal = detectRiskSignal(normalizedMessage);
+    if (!riskSignal.matched) {
       return res.status(422).json({ error: "Risk signal not detected" });
+    }
+
+    const safeMetadata = (metadata && typeof metadata === "object" && !Array.isArray(metadata)) ? { ...metadata } : {};
+    if (!safeMetadata.riskCategory) {
+      safeMetadata.riskCategory = riskSignal.category;
     }
 
     await RiskAlert.create({
@@ -245,8 +256,8 @@ router.post("/risk-alert", requireAuthenticatedUser, postActionLimiter, async (r
       anonymousId: String(resolvedAnonymousId || ""),
       clientIp: getClientKey(req),
       message: normalizedMessage,
-      triggerTerm: String(triggerTerm || "risk_pattern").trim() || "risk_pattern",
-      metadata: (metadata && typeof metadata === "object" && !Array.isArray(metadata)) ? metadata : {}
+      triggerTerm: String(triggerTerm || riskSignal.term || "risk_pattern").trim() || "risk_pattern",
+      metadata: safeMetadata
     });
 
     return res.json({ success: true });
@@ -274,19 +285,21 @@ router.post("/posts", requireAuthenticatedUser, postActionLimiter, async (req, r
     }
 
     const postRiskText = `${String(title || "")}\n${String(content || "")}\n${cleanedTags.join(" ")}`;
-    if (hasSeriousRiskSignal(postRiskText)) {
+    const postRiskSignal = detectRiskSignal(postRiskText);
+    if (postRiskSignal.matched) {
       await RiskAlert.create({
         source: "community_post",
         userId: String(userId || ""),
         anonymousId: String(resolvedAnonymousId || ""),
         clientIp: getClientKey(req),
         message: postRiskText,
-        triggerTerm: "risk_pattern",
+        triggerTerm: postRiskSignal.term || "risk_pattern",
         metadata: {
-          tags: cleanedTags
+          tags: cleanedTags,
+          riskCategory: postRiskSignal.category
         }
       });
-      return res.status(422).json({ error: COMMUNITY_RED_ALERT_ERROR });
+      return res.status(422).json({ error: getCommunityRedAlertError(postRiskSignal.category) });
     }
 
     const post = await CommunityPost.create({
@@ -318,20 +331,22 @@ router.post("/posts/:postId/replies", requireAuthenticatedUser, postActionLimite
       return res.status(400).json({ error: "content is required" });
     }
 
-    if (hasSeriousRiskSignal(String(content || ""))) {
+    const replyRiskSignal = detectRiskSignal(String(content || ""));
+    if (replyRiskSignal.matched) {
       await RiskAlert.create({
         source: "community_reply",
         userId: String(userId || ""),
         anonymousId: String(resolvedAnonymousId || ""),
         clientIp: getClientKey(req),
         message: String(content || ""),
-        triggerTerm: "risk_pattern",
+        triggerTerm: replyRiskSignal.term || "risk_pattern",
         metadata: {
           postId: String(postId || ""),
-          parentReplyId: parentReplyId ? String(parentReplyId) : ""
+          parentReplyId: parentReplyId ? String(parentReplyId) : "",
+          riskCategory: replyRiskSignal.category
         }
       });
-      return res.status(422).json({ error: COMMUNITY_RED_ALERT_ERROR });
+      return res.status(422).json({ error: getCommunityRedAlertError(replyRiskSignal.category) });
     }
 
     const post = await CommunityPost.findById(postId);

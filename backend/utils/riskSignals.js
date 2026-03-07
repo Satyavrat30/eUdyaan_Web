@@ -1,4 +1,4 @@
-const RISK_PATTERNS = [
+const SELF_HARM_RISK_PATTERNS = [
   /\b(kms|kys)\b/i,
   /\bsuicide\b/i,
   /\bkill\s*my\s*self\b/i,
@@ -16,8 +16,6 @@ const RISK_PATTERNS = [
   /\bend\s*it\s*all\b/i,
   /\bself[- ]?harm\b/i,
   /\bhurt\s*myself\b/i,
-  /\bmurder\b/i,
-  /\bkill\b/i,
   /\bmarna\b/i,
   /\bmar\s*jana\b/i,
   /\bjeena\s*nahi\b/i,
@@ -38,8 +36,6 @@ const RISK_PATTERNS = [
   /\bphanda\b/i,
   /\bzeher\b/i,
   /\boverdose\b/i,
-  /\bmaar\s*do\b/i,
-  /\bmar\s*do\b/i,
   /\bquit\s*life\b/i,
   /\bquit\s*living\b/i,
   /आत्महत्या/i,
@@ -56,12 +52,67 @@ const RISK_PATTERNS = [
   /मुझे\s*मरना\s*है/i
 ];
 
-function hasSeriousRiskSignal(text) {
-  if (!text || typeof text !== "string") return false;
-  return RISK_PATTERNS.some((pattern) => pattern.test(text));
+const VIOLENCE_RISK_PATTERNS = [
+  /\bplan\s*(a|an)?\s*(bomb|blast|attack)\b/i,
+  /\bplant\s*(a|an)?\s*bomb\b/i,
+  /\buse\s*(a|an)?\s*bomb\b/i,
+  /\bbomb\s*(the|this|a|my)?\s*(campus|college|school|building|class|hostel)\b/i,
+  /\b(blast|explode|blow\s*up)\s*(the|this|a|my)?\s*(campus|college|school|building|class|hostel|bus)\b/i,
+  /\bshoot\s*(them|him|her|people|everyone|students?|classmates?|teacher|teachers)\b/i,
+  /\bstab\s*(them|him|her|someone|people)\b/i,
+  /\bkill\s*(them|him|her|everyone|people|students?|classmates?|teacher|teachers)\b/i,
+  /\bmurder\b/i,
+  /\bmaar\s*do\b/i,
+  /\bmar\s*do\b/i,
+  /\bcampus\s*ko\s*bomb\s*se\s*udaa?\s*(du|dun|dunga|dungi)\b/i,
+  /\bbomb\s*(se)?\s*udaa?\s*(du|dun|dunga|dungi)\b/i,
+  /\bbomb\s*rakh\s*(du|dun|dunga|dungi)\b/i,
+  /\b(campus|college|school|hostel|class)\s*ko\s*(udaa?|jala)\s*(du|dun|dunga|dungi)\b/i,
+  /\b(sabko|logon\s*ko|students?|classmates?|teacher|teachers)\s*maar\s*(du|dun|dunga|dungi)\b/i,
+  /बम\s*(से)?\s*(उड़ा|फोड़)/i,
+  /कैंपस\s*को\s*बम\s*से\s*उड़ा/i,
+  /(सबको|लोगों\s*को|छात्रों\s*को|टीचर\s*को)\s*मार\s*(दूंगा|दूँगा|दूंगी|दूँगी|दू)/i
+];
+
+function getPatternMatch(text, patterns) {
+  const source = String(text || "");
+  for (const pattern of patterns) {
+    const match = source.match(pattern);
+    if (match) {
+      return match[0];
+    }
+  }
+  return "";
 }
+
+function detectRiskSignal(text) {
+  if (!text || typeof text !== "string") {
+    return { matched: false, category: "none", term: "" };
+  }
+
+  const selfHarmTerm = getPatternMatch(text, SELF_HARM_RISK_PATTERNS);
+  if (selfHarmTerm) {
+    return { matched: true, category: "self_harm", term: selfHarmTerm };
+  }
+
+  const violenceTerm = getPatternMatch(text, VIOLENCE_RISK_PATTERNS);
+  if (violenceTerm) {
+    return { matched: true, category: "violence", term: violenceTerm };
+  }
+
+  return { matched: false, category: "none", term: "" };
+}
+
+function hasSeriousRiskSignal(text) {
+  return detectRiskSignal(text).matched;
+}
+
+const RISK_PATTERNS = [...SELF_HARM_RISK_PATTERNS, ...VIOLENCE_RISK_PATTERNS];
 
 module.exports = {
   RISK_PATTERNS,
+  SELF_HARM_RISK_PATTERNS,
+  VIOLENCE_RISK_PATTERNS,
+  detectRiskSignal,
   hasSeriousRiskSignal
 };

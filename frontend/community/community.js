@@ -101,8 +101,6 @@ const COMMUNITY_CRISIS_PATTERNS = [
   /\bhurt\s*myself\b/i,
   /\bquit\s*life\b/i,
   /\bquit\s*living\b/i,
-  /\bmurder\b/i,
-  /\bkill\b/i,
   /\bmarna\b/i,
   /\bmar\s*jana\b/i,
   /\bjeena\s*nahi\b/i,
@@ -122,8 +120,6 @@ const COMMUNITY_CRISIS_PATTERNS = [
   /\bphanda\b/i,
   /\bzeher\b/i,
   /\boverdose\b/i,
-  /\bmaar\s*do\b/i,
-  /\bmar\s*do\b/i,
   /आत्महत्या/i,
   /खुदकुशी/i,
   /फांसी/i,
@@ -138,18 +134,67 @@ const COMMUNITY_CRISIS_PATTERNS = [
   /मुझे\s*मरना\s*है/i
 ];
 
-function detectCommunityRiskTerm(text) {
+const COMMUNITY_VIOLENCE_PATTERNS = [
+  /\bplan\s*(a|an)?\s*(bomb|blast|attack)\b/i,
+  /\bplant\s*(a|an)?\s*bomb\b/i,
+  /\buse\s*(a|an)?\s*bomb\b/i,
+  /\bbomb\s*(the|this|a|my)?\s*(campus|college|school|building|class|hostel)\b/i,
+  /\b(blast|explode|blow\s*up)\s*(the|this|a|my)?\s*(campus|college|school|building|class|hostel|bus)\b/i,
+  /\bshoot\s*(them|him|her|people|everyone|students?|classmates?|teacher|teachers)\b/i,
+  /\bstab\s*(them|him|her|someone|people)\b/i,
+  /\bkill\s*(them|him|her|everyone|people|students?|classmates?|teacher|teachers)\b/i,
+  /\bmurder\b/i,
+  /\bmaar\s*do\b/i,
+  /\bmar\s*do\b/i,
+  /\bcampus\s*ko\s*bomb\s*se\s*udaa?\s*(du|dun|dunga|dungi)\b/i,
+  /\bbomb\s*(se)?\s*udaa?\s*(du|dun|dunga|dungi)\b/i,
+  /\bbomb\s*rakh\s*(du|dun|dunga|dungi)\b/i,
+  /\b(campus|college|school|hostel|class)\s*ko\s*(udaa?|jala)\s*(du|dun|dunga|dungi)\b/i,
+  /\b(sabko|logon\s*ko|students?|classmates?|teacher|teachers)\s*maar\s*(du|dun|dunga|dungi)\b/i,
+  /बम\s*(से)?\s*(उड़ा|फोड़)/i,
+  /कैंपस\s*को\s*बम\s*से\s*उड़ा/i,
+  /(सबको|लोगों\s*को|छात्रों\s*को|टीचर\s*को)\s*मार\s*(दूंगा|दूँगा|दूंगी|दूँगी|दू)/i
+];
+
+function detectPatternMatch(text, patterns) {
   const value = String(text || "");
-  for (const pattern of COMMUNITY_CRISIS_PATTERNS) {
+  for (const pattern of patterns) {
     const match = value.match(pattern);
     if (match) return match[0];
   }
+  return "";
+}
+
+function detectCommunityRiskTerm(text) {
+  return detectPatternMatch(text, COMMUNITY_CRISIS_PATTERNS) || null;
+}
+
+function detectCommunityRiskSignal(text) {
+  const violenceTerm = detectPatternMatch(text, COMMUNITY_VIOLENCE_PATTERNS);
+  if (violenceTerm) {
+    return { category: "violence", term: violenceTerm };
+  }
+
+  const selfHarmTerm = detectCommunityRiskTerm(text);
+  if (selfHarmTerm) {
+    return { category: "self_harm", term: selfHarmTerm };
+  }
+
   return null;
 }
 
-function openRedAlertPopup(triggerText) {
+function formatCommunityRiskType(category) {
+  return category === "violence" ? "VIOLENCE" : "SELF_HARM";
+}
+
+function openRedAlertPopup(triggerText, riskCategory = "self_harm") {
+  const normalizedCategory = riskCategory === "violence" ? "violence" : "self_harm";
+  const typeLabel = formatCommunityRiskType(normalizedCategory);
+
   if (redAlertText) {
-    redAlertText.textContent = `RED ALERT TRIGGERED. This content may indicate immediate self-harm risk and cannot be posted. Triggered phrase: "${triggerText}". Please use immediate support options.`;
+    redAlertText.textContent = normalizedCategory === "violence"
+      ? `RED ALERT - ${typeLabel} TRIGGERED. This content may indicate risk of harm to others and cannot be posted. Triggered phrase: "${triggerText}". Please step away, calm down, and use immediate support options.`
+      : `RED ALERT - ${typeLabel} TRIGGERED. This content may indicate immediate self-harm risk and cannot be posted. Triggered phrase: "${triggerText}". Please use immediate support options.`;
   }
 
   if (redAlertCall) {
@@ -160,6 +205,14 @@ function openRedAlertPopup(triggerText) {
   }
 
   redAlertModal?.classList.remove("hidden");
+}
+
+function parseCommunityRedAlert(errorMessage) {
+  const value = String(errorMessage || "");
+  const match = value.match(/RED_ALERT_TRIGGERED(?::([a-z_]+))?/i);
+  if (!match) return null;
+  const category = String(match[1] || "self_harm").toLowerCase() === "violence" ? "violence" : "self_harm";
+  return { category };
 }
 
 function closeRedAlertPopup() {
@@ -503,15 +556,18 @@ createForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  const postRiskTerm = detectCommunityRiskTerm(`${title}\n${content}\n${tags.join(" ")}`);
-  if (postRiskTerm) {
+  const postRiskSignal = detectCommunityRiskSignal(`${title}\n${content}\n${tags.join(" ")}`);
+  if (postRiskSignal) {
     void reportCommunityRiskAlert({
       source: "community_post_client_block",
       message: `${title}\n${content}\n${tags.join(" ")}`,
-      triggerTerm: postRiskTerm,
-      metadata: { tags }
+      triggerTerm: postRiskSignal.term,
+      metadata: {
+        tags,
+        riskCategory: postRiskSignal.category
+      }
     });
-    openRedAlertPopup(postRiskTerm);
+    openRedAlertPopup(postRiskSignal.term, postRiskSignal.category);
     return;
   }
 
@@ -534,8 +590,9 @@ createForm.addEventListener("submit", async (event) => {
     await loadPosts();
     openDrawer(data.post.id);
   } catch (error) {
-    if (String(error.message || "").includes("RED_ALERT_TRIGGERED")) {
-      openRedAlertPopup("self-harm risk");
+    const redAlert = parseCommunityRedAlert(error.message);
+    if (redAlert) {
+      openRedAlertPopup("high-risk signal", redAlert.category);
       return;
     }
     alert(`Failed to create post: ${error.message}`);
@@ -595,18 +652,19 @@ replyForm.addEventListener("submit", async (event) => {
   const content = replyInput.value.trim();
   if (!content) return;
 
-  const replyRiskTerm = detectCommunityRiskTerm(content);
-  if (replyRiskTerm) {
+  const replyRiskSignal = detectCommunityRiskSignal(content);
+  if (replyRiskSignal) {
     void reportCommunityRiskAlert({
       source: "community_reply_client_block",
       message: content,
-      triggerTerm: replyRiskTerm,
+      triggerTerm: replyRiskSignal.term,
       metadata: {
         postId: activePostId,
-        parentReplyId: replyTargetId || ""
+        parentReplyId: replyTargetId || "",
+        riskCategory: replyRiskSignal.category
       }
     });
-    openRedAlertPopup(replyRiskTerm);
+    openRedAlertPopup(replyRiskSignal.term, replyRiskSignal.category);
     return;
   }
 
@@ -629,8 +687,9 @@ replyForm.addEventListener("submit", async (event) => {
     openDrawer(updated.id);
     renderFeed();
   } catch (error) {
-    if (String(error.message || "").includes("RED_ALERT_TRIGGERED")) {
-      openRedAlertPopup("self-harm risk");
+    const redAlert = parseCommunityRedAlert(error.message);
+    if (redAlert) {
+      openRedAlertPopup("high-risk signal", redAlert.category);
       return;
     }
     alert(`Failed to add reply: ${error.message}`);

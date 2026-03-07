@@ -119,9 +119,16 @@ function renderRiskAlerts(items) {
     const selected = riskSourceFilter?.value === "community"
       ? "Community"
       : (riskSourceFilter?.value === "ai_assistant_chatbot" ? "AI Assistant Chatbot" : "All Sources");
-    riskAlertsBody.innerHTML = `<tr><td colspan="6">No risk alerts found for ${esc(selected)}.</td></tr>`;
+    riskAlertsBody.innerHTML = `<tr><td colspan="7">No risk alerts found for ${esc(selected)}.</td></tr>`;
     return;
   }
+
+  const riskTypeLabel = (item) => {
+    const category = String(item?.riskCategory || "").toLowerCase();
+    if (category === "violence") return "VIOLENCE";
+    if (category === "self_harm") return "SELF_HARM";
+    return "HIGH_RISK";
+  };
 
   const sourceLabel = (item) => item.sourceType === "ai_assistant_chatbot" ? "AI Assistant Chatbot" : "Community";
   riskAlertsBody.innerHTML = items
@@ -132,6 +139,7 @@ function renderRiskAlerts(items) {
         <td>${esc(userLabel(item.user, item.userId, item.anonymousId))}</td>
         <td>${esc(item.anonymousId || "-")}</td>
         <td>${esc(item.triggerTerm || "risk_pattern")}</td>
+        <td>${esc(riskTypeLabel(item))}</td>
         <td>${esc(item.message || "")}</td>
       </tr>
     `)
@@ -223,7 +231,7 @@ async function loadDashboard() {
 
   refreshBtn.disabled = true;
   refreshBtn.textContent = "Refreshing...";
-  setTableLoading(riskAlertsBody, 6);
+  setTableLoading(riskAlertsBody, 7);
   setTableLoading(chatsBody, 6);
   setTableLoading(communityBody, 6);
   setTableLoading(contactsBody, 5);
