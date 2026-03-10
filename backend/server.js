@@ -266,9 +266,7 @@ function aiRiskAlertRateLimiter(req, res, next) {
 const configuredOrigins = [
     process.env.ALLOWED_ORIGINS,
     process.env.FRONTEND_URL,
-    process.env.RENDER_EXTERNAL_URL,
-    "http://localhost:5000",
-    "http://127.0.0.1:5000"
+    process.env.RENDER_EXTERNAL_URL
 ]
     .flatMap((value) => String(value || "").split(","))
     .map((value) => value.trim())
@@ -447,9 +445,11 @@ mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 })
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    const baseUrl = `http://localhost:${PORT}`;
+    const baseUrl = String(process.env.RENDER_EXTERNAL_URL || process.env.FRONTEND_URL || "").trim().replace(/\/$/, "");
     console.log(`Server running on port ${PORT}`);
-    console.log(`Open app: ${baseUrl}`);
-    console.log(`Open login: ${baseUrl}/login.html`);
-    console.log(`Open admin: ${baseUrl}/admin/admin-login.html`);
+    if (baseUrl) {
+        console.log(`Open app: ${baseUrl}`);
+        console.log(`Open login: ${baseUrl}/login.html`);
+        console.log(`Open admin: ${baseUrl}/admin/admin-login.html`);
+    }
 });

@@ -1,16 +1,24 @@
-const API_BASE = window.location.protocol === "file:" ? "http://localhost:5000" : "";
+const API_BASE = "";
 
 const appointmentsList = document.getElementById("appointmentsList");
 
 function getProfileOrRedirect() {
   const profile = window.EudyaanSession?.getProfile?.() || null;
-  if (profile?.id) return profile;
+  const sessionToken = window.EudyaanSession?.getSessionToken?.() || "";
+  if (profile?.id && sessionToken) return profile;
   window.EudyaanSession?.redirectToLogin?.();
   return null;
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options);
+  const authHeaders = window.EudyaanSession?.getAuthHeaders?.() || {};
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...authHeaders
+    }
+  });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(data?.error || "Request failed");
@@ -59,7 +67,7 @@ async function loadAppointments() {
   appointmentsList.innerHTML = "<p>Loading appointments...</p>";
 
   try {
-    const data = await fetchJson(`${API_BASE}/api/appointments?userId=${encodeURIComponent(profile.id)}`);
+    const data = await fetchJson(`${API_BASE}/api/appointments`);
     renderAppointments(data.appointments || []);
   } catch (error) {
     appointmentsList.innerHTML = `<p>Unable to load appointments: ${error.message}</p>`;
@@ -78,7 +86,7 @@ appointmentsList.addEventListener("click", async (event) => {
   if (!profile?.id) return;
 
   try {
-    await fetchJson(`${API_BASE}/api/appointments/${appointmentId}?userId=${encodeURIComponent(profile.id)}`, {
+    await fetchJson(`${API_BASE}/api/appointments/${appointmentId}`, {
       method: "DELETE"
     });
     await loadAppointments();

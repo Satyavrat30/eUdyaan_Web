@@ -1,4 +1,4 @@
-const API_BASE = window.location.protocol === "file:" ? "http://localhost:5000" : "";
+const API_BASE = "";
 const USER_KEY = "eudyaan_user_profile";
 const SESSION_TOKEN_KEY = "eudyaan_session_token";  // Fix #2
 

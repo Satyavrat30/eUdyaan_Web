@@ -1,4 +1,4 @@
-const API_BASE = window.location.protocol === "file:" ? "http://localhost:5000" : "";
+const API_BASE = "";
 
 const form = document.getElementById("contactForm");
 const statusEl = document.getElementById("contactMessage");
@@ -12,11 +12,14 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const profile = window.EudyaanSession?.getProfile?.() || null;
-  if (!profile?.id) {
+  const sessionToken = window.EudyaanSession?.getSessionToken?.() || "";
+  if (!profile?.id || !sessionToken) {
     setStatus("Please login to send a message.", true);
     window.EudyaanSession?.redirectToLogin?.();
     return;
   }
+
+  const authHeaders = window.EudyaanSession?.getAuthHeaders?.() || {};
 
   const payload = {
     userId: profile.id,
@@ -35,7 +38,7 @@ form.addEventListener("submit", async (event) => {
   try {
     const response = await fetch(`${API_BASE}/api/contact/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify(payload)
     });
     const data = await response.json().catch(() => ({}));
