@@ -1,5 +1,4 @@
-const backendHost = window.location.hostname || "localhost";
-const API_BASE = window.location.port === "5000" ? "" : `http://${backendHost}:5000`;
+const API_BASE = window.location.protocol === "file:" ? "http://localhost:5000" : "";
 
 const form = document.getElementById("contactForm");
 const statusEl = document.getElementById("contactMessage");

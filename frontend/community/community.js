@@ -40,11 +40,8 @@ const redAlertCall = document.getElementById("redAlertCall");
 const redAlertConsult = document.getElementById("redAlertConsult");
 const redAlertClose = document.getElementById("redAlertClose");
 
-const backendHost = window.location.hostname || "localhost";
-// If served directly by the backend (port 5000) use relative URLs, otherwise point to backend
-const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:") 
-  ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
-  : `http://${backendHost}:5000`;
+// Use same-origin API routes in deployed environments; keep localhost fallback for file:// local testing.
+const API_BASE = window.location.protocol === "file:" ? "http://localhost:5000" : "";
 const HELPLINE_CALL_NUMBER = "9152987821";
 const CONSULT_DOCTOR_LINK = "../appointment/appointment.html";
 
