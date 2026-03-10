@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up – eUdyaan</title>
+<link rel="stylesheet" href="auth.css">
+<style>
+  .strength-wrap { margin-top: 6px; }
+  .strength-track { height: 5px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+  #passwordStrengthBar { height: 100%; width: 0; border-radius: 4px; transition: width 0.3s, background 0.3s; }
+  #passwordStrengthLabel { font-size: 12px; margin-top: 3px; color: #94a3b8; }
+  .pw-rules { font-size: 12px; color: #64748b; margin-top: 6px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="auth-container">
+  <div class="auth-card">
+    <a class="back-btn" href="index.html">← Back to Home</a>
+    <h2 style="margin-bottom:18px;color:#3a5a40;">Create Account</h2>
+
+    <div class="row">
+      <div class="field">
+        <label>First Name</label>
+        <input id="firstName" type="text" placeholder="Your first name">
+      </div>
+      <div class="field">
+        <label>Last Name</label>
+        <input id="lastName" type="text" placeholder="Your last name">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Email</label>
+        <input id="signupEmail" type="email" placeholder="email@domain.com">
+      </div>
+      <div class="field">
+        <label>Phone (optional)</label>
+        <input id="phone" type="text" placeholder="+91 98765xxxxx">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="password-box">
+        <input id="signupPassword" type="password" placeholder="Min 8 chars, mixed case + number + symbol">
+        <span class="eye" onclick="togglePass('signupPassword',this)">Show</span>
+      </div>
+      <div class="strength-wrap">
+        <div class="strength-track"><div id="passwordStrengthBar"></div></div>
+        <div id="passwordStrengthLabel"></div>
+      </div>
+      <div class="pw-rules">Must include: uppercase, lowercase, number, special character (!@#$%^&*)</div>
+    </div>
+
+    <div class="field">
+      <label>Confirm Password</label>
+      <div class="password-box">
+        <input id="confirmPassword" type="password" placeholder="Re-enter your password">
+        <span class="eye" onclick="togglePass('confirmPassword',this)">Show</span>
+      </div>
+    </div>
+
+    <button id="signupBtn" class="btn">Sign Up</button>
+    <p id="authMessage" class="forgot"></p>
+
+    <div style="margin-top:14px;text-align:center;font-size:14px;color:#64748b;">
+      Already have an account? <a href="login.html" style="color:#5f6f52;">Login here</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePass(id, el) {
+  const inp = document.getElementById(id);
+  if (inp.type === "password") { inp.type = "text"; el.textContent = "Hide"; }
+  else { inp.type = "password"; el.textContent = "Show"; }
+}
+</script>
+<script src="auth.js"></script>
+</body>
+</html>

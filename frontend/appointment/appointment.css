@@ -1,0 +1,291 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #fafafa;
+}
+
+.topbar {
+  background: white;
+  padding: 16px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  text-decoration: none;
+}
+
+.logo img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+nav {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+nav a {
+  margin: 0 10px;
+  text-decoration: none;
+  color: #1f2937;
+}
+
+nav a.active {
+  color: #5c6f5b;
+  font-weight: 600;
+}
+
+.auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth .login {
+  background: #5c6f5b;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.wrapper {
+  max-width: 900px;
+  margin: auto;
+  padding: 40px;
+  text-align: center;
+}
+
+.subtitle {
+  color: #666;
+}
+
+.steps span {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: #ccc;
+  border-radius: 50%;
+  margin: 10px;
+}
+
+.steps .active {
+  background: #5c6f5b;
+}
+
+.step {
+  display: none;
+}
+
+.step.active {
+  display: block;
+}
+
+.doctor-grid {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.doctor-card {
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 20px;
+  width: 200px;
+  cursor: pointer;
+}
+
+.doctor-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.selectable.selected {
+  border-color: #5c6f5b;
+  background: #eef3ee;
+}
+
+.datetime {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.calendar {
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.cal-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.days, .dates {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.dates span {
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.dates span.active {
+  background: #5c6f5b;
+  color: white;
+}
+
+.times button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 18px;
+
+    background-color: #eaf2e3;   /* visible background */
+    color: #1f2d1f;
+
+    border: 1px solid #4c6b4c;
+    border-radius: 20px;
+
+    cursor: pointer;
+    font-size: 14px;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* STOP white flash on click */
+.times button:active,
+.times button:focus {
+    background-color: #eaf2e3;
+    color: #1f2d1f;
+    outline: none;
+    box-shadow: none;
+}
+
+/* Nice press effect */
+.times button:active {
+    transform: scale(0.96);
+}
+
+.times button.selected {
+    background-color: #4c6b4c;
+    color: white;
+}
+
+
+.type-grid {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  margin: 40px 0;
+}
+
+.login-note {
+  margin: 10px auto 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.type-card {
+  border: 1px solid #ccc;
+  padding: 30px;
+  border-radius: 12px;
+  width: 200px;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+button {
+  padding: 10px 24px;
+  border-radius: 20px;
+  border: none;
+  background: #5c6f5b;
+  color: white;
+  cursor: pointer;
+}
+
+.check {
+  font-size: 48px;
+  color: green;
+}
+
+.booking-summary {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondary-btn {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.history-card {
+  margin: 26px auto 0;
+  max-width: 720px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+}
+
+.history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.history-item {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.history-item h4 {
+  margin: 0 0 6px;
+  color: #111827;
+}
+
+.history-item p {
+  margin: 4px 0;
+  color: #374151;
+}
+
+.cancel-booking {
+  margin-top: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+}

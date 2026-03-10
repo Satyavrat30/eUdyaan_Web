@@ -1,0 +1,12 @@
+{
+  "name": "eudyaan-web",
+  "private": true,
+  "scripts": {
+    "start": "node backend/server.js",
+    "test:risk": "node backend/scripts/risk-signal-matrix.js",
+    "test:hardcore": "node backend/scripts/hardcore-api-test.js",
+    "test:ui-languages": "node backend/scripts/ui-language-smoke-all.js",
+    "test:checklist-remaining": "node backend/scripts/checklist-batch-final-remaining.js --phase=pre",
+    "test:checklist-email": "python backend/scripts/checklist-email-final-two.py"
+  }
+}
