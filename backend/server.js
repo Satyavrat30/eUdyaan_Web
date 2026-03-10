@@ -262,16 +262,41 @@ function aiRiskAlertRateLimiter(req, res, next) {
     return next();
 }
 
-// Fix #9: Restrict CORS to frontend origin only
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || "http://localhost:5000")
-    .split(",").map(s => s.trim()).filter(Boolean);
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (server-to-server, curl) or matching origins
-        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-        callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true
+// Fix #9: Restrict CORS with allow-list, while always allowing same-host frontend/backend traffic.
+const configuredOrigins = [
+    process.env.ALLOWED_ORIGINS,
+    process.env.FRONTEND_URL,
+    process.env.RENDER_EXTERNAL_URL,
+    "http://localhost:5000",
+    "http://127.0.0.1:5000"
+]
+    .flatMap((value) => String(value || "").split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+const allowedOrigins = new Set(configuredOrigins);
+
+function getRequestHost(req) {
+    const raw = req.headers["x-forwarded-host"] || req.headers.host || "";
+    return String(Array.isArray(raw) ? raw[0] : raw).split(",")[0].trim().toLowerCase();
+}
+
+function isSameHostOrigin(origin, req) {
+    if (!origin) return true;
+    try {
+        const originHost = new URL(origin).host.toLowerCase();
+        const requestHost = getRequestHost(req);
+        return Boolean(requestHost) && originHost === requestHost;
+    } catch (_) {
+        return false;
+    }
+}
+
+app.use(cors((req, callback) => {
+    const origin = String(req.header("Origin") || "").trim();
+    if (!origin || allowedOrigins.has(origin) || isSameHostOrigin(origin, req)) {
+        return callback(null, { origin: true, credentials: true });
+    }
+    return callback(new Error(`Not allowed by CORS for origin: ${origin}`));
 }));
 app.use(express.json());
 
@@ -401,6 +426,13 @@ app.post("/api/ai/support", requireUserSession, aiSupportRateLimiter, async (req
 
 app.use(express.static(path.join(__dirname, "../frontend")));
 app.get("/", (req, res) => { res.sendFile(path.join(__dirname, "../frontend", "index.html")); });
+
+app.use((err, req, res, next) => {
+    if (err && /Not allowed by CORS/i.test(String(err.message || ""))) {
+        return res.status(403).json({ error: err.message });
+    }
+    return next(err);
+});
 
 if (!process.env.MONGO_URI) { console.error("Missing MONGO_URI in backend/.env"); process.exit(1); }
 
