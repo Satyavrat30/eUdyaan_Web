@@ -67,6 +67,8 @@ cd backend && node server.js
 | 14 | Password change notification | A confirmation email is sent to the user when their password is successfully reset. |
 | 15 | Resend verification email | `POST /api/auth/resend-verification` endpoint added. Shown as a link after signup when email verification is required. |
 | 16 | Tech debt documented | All migration paths are now documented here and in `.env.example` with clear instructions. |
+| 17 | Mongo DNS resiliency | Optional `DNS_SERVERS` env var added so Node can use custom DNS resolvers when local DNS blocks Atlas SRV lookups. |
+| 18 | Community full history + stable tags | Community feed now supports `GET /api/community/posts?limit=all` and frontend requests all posts so older posts remain visible; tag dropdown options no longer collapse after selecting one tag. |
 
 ---
 
@@ -81,6 +83,32 @@ Key variables:
 - `ANON_ID_SECRET` — Secret for anonymous ID HMAC
 - `ALLOWED_ORIGINS` — Comma-separated list of allowed frontend origins (CORS)
 - `FRONTEND_URL` — Used in email verification and password reset links
+- `DNS_SERVERS` — Optional comma-separated DNS servers for Node.js resolver override (example: `8.8.8.8,1.1.1.1`)
+
+---
+
+## Troubleshooting
+
+- MongoDB Atlas SRV DNS error (`querySrv ECONNREFUSED` or DNS timeout):
+
+```bash
+# backend/.env
+DNS_SERVERS=8.8.8.8,1.1.1.1
+```
+
+Then restart:
+
+```bash
+npm start
+```
+
+- Community feed should show complete history:
+
+```bash
+GET /api/community/posts?sort=recent&category=all&days=all&tag=all&limit=all
+```
+
+If the browser still shows stale filter behavior, do a hard refresh (`Ctrl+F5`).
 
 ---
 

@@ -243,6 +243,7 @@ let activePostId = null;
 let replyTargetId = null;
 let activeSort = "recent";
 let collapsedReplyIds = new Set();
+let knownTagOptions = new Set();
 
 async function fetchJson(url, options) {
   const response = await fetch(url, options);
@@ -277,20 +278,21 @@ function getReplyId(reply) {
 }
 
 function updateTagFilterOptions() {
-  const tags = new Set();
   posts.forEach((post) => {
-    (post.tags || []).forEach((tag) => tags.add(tag.toLowerCase()));
+    (post.tags || []).forEach((tag) => knownTagOptions.add(tag.toLowerCase()));
   });
 
-  const previous = tagFilter.value;
+  const previous = tagFilter.value || "all";
   const options = ["<option value=\"all\">Tag: All</option>"];
-  Array.from(tags).sort().forEach((tag) => {
+  Array.from(knownTagOptions).sort((a, b) => a.localeCompare(b)).forEach((tag) => {
     const safeTag = escapeHtml(tag);
     options.push(`<option value="${safeTag}">Tag: ${safeTag}</option>`);
   });
   tagFilter.innerHTML = options.join("");
   if (Array.from(tagFilter.options).some((opt) => opt.value === previous)) {
     tagFilter.value = previous;
+  } else {
+    tagFilter.value = "all";
   }
 }
 
@@ -512,6 +514,7 @@ async function loadPosts() {
       category: categoryFilter.value,
       days: dateFilter.value,
       tag: tagFilter.value,
+      limit: "all",
       userId: currentUserId,
       anonymousId: fallbackAnonymousId
     });
