@@ -174,10 +174,7 @@ const downloadReportJsonBtn = document.getElementById("download-report-json-btn"
 const clearChatBtn = document.getElementById("clear-chat-btn");
 const reportView = document.getElementById("report-view");
 
-const backendHost = window.location.hostname || "localhost";
-const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:")
-  ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
-  : `http://${backendHost}:5000`;
+const API_BASE = "";
 const HELPLINE_CALL_NUMBER = "9152987821";
 const CONSULT_DOCTOR_LINK = "../appointment/appointment.html";
 const profile = window.EudyaanSession?.getProfile?.() || null;
@@ -845,9 +842,10 @@ function isClearCommand(text) {
 async function askAi(message, preferredLanguage) {
   let response;
   try {
+    const authHeaders = window.EudyaanSession?.getAuthHeaders?.() || {};
     response = await fetch(`${API_BASE}/api/ai/support`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({ userId: currentUserId, message, history: state.history, preferredLanguage })
     });
   } catch {
@@ -868,9 +866,10 @@ async function askAi(message, preferredLanguage) {
 async function reportAiRiskAlert({ source, message, triggerTerm, metadata = {} }) {
   if (!currentUserId) return;
   try {
+    const authHeaders = window.EudyaanSession?.getAuthHeaders?.() || {};
     const response = await fetch(`${API_BASE}/api/ai/risk-alert`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({
         userId: currentUserId,
         source,
@@ -904,6 +903,13 @@ async function handleUserMessage(message) {
     : detectConversationLanguage(message);
   const userLanguage = preferredConversationLanguage;
   const textLabel = labelsForLanguage(userLanguage);
+
+  const sessionToken = window.EudyaanSession?.getSessionToken?.() || "";
+  if (!currentUserId || !sessionToken) {
+    appendMessage("ai", "Please login to continue AI support chat.");
+    window.EudyaanSession?.redirectToLogin?.();
+    return;
+  }
 
   const userRiskSignal = detectRiskSignal(message);
   const userCriticalTerm = userRiskSignal?.term || "";
@@ -966,6 +972,10 @@ async function handleUserMessage(message) {
     saveReportSnapshot();
   } catch (error) {
     const text = String(error.message || "");
+    if (text.includes("Login required") || text.includes("Session expired")) {
+      appendMessage("ai", "Your session expired. Please login again.");
+      window.EudyaanSession?.redirectToLogin?.();
+    } else
     if (text.includes("Too many requests")) {
       appendMessage("ai", textLabel.tooFast);
     } else if (text.includes("Server is busy")) {

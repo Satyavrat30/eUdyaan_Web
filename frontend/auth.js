@@ -1,5 +1,4 @@
-const backendHost = window.location.hostname || "localhost";
-const API_BASE = window.location.port === "5000" ? "" : `http://${backendHost}:5000`;
+const API_BASE = "";
 const USER_KEY = "eudyaan_user_profile";
 const SESSION_TOKEN_KEY = "eudyaan_session_token";  // Fix #2
 

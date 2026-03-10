@@ -40,20 +40,18 @@ const redAlertCall = document.getElementById("redAlertCall");
 const redAlertConsult = document.getElementById("redAlertConsult");
 const redAlertClose = document.getElementById("redAlertClose");
 
-const backendHost = window.location.hostname || "localhost";
-// If served directly by the backend (port 5000) use relative URLs, otherwise point to backend
-const API_BASE = (window.location.port === "5000" || window.location.protocol === "file:") 
-  ? (window.location.protocol === "file:" ? "http://localhost:5000" : "")
-  : `http://${backendHost}:5000`;
+// Use same-origin API routes.
+const API_BASE = "";
 const HELPLINE_CALL_NUMBER = "9152987821";
 const CONSULT_DOCTOR_LINK = "../appointment/appointment.html";
 
 const profile = window.EudyaanSession?.getProfile?.() || null;
 const currentUserId = profile?.id || "";
+const currentSessionToken = window.EudyaanSession?.getSessionToken?.() || "";
 const fallbackAnonymousId = profile?.anonymousId || getGuestAnonymousId();
 
 function requireLoginForFeature() {
-  if (currentUserId) return true;
+  if (currentUserId && currentSessionToken) return true;
   if (window.EudyaanSession?.redirectToLogin) {
     window.EudyaanSession.redirectToLogin();
   } else {
@@ -245,8 +243,15 @@ let activeSort = "recent";
 let collapsedReplyIds = new Set();
 let knownTagOptions = new Set();
 
-async function fetchJson(url, options) {
-  const response = await fetch(url, options);
+async function fetchJson(url, options = {}) {
+  const authHeaders = window.EudyaanSession?.getAuthHeaders?.() || {};
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...authHeaders
+    }
+  });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(data?.error || "Request failed");

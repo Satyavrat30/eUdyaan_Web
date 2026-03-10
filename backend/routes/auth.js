@@ -62,6 +62,25 @@ function getTransporter() {
   });
 }
 
+function getPublicBaseUrl(req) {
+  const configured = String(process.env.RENDER_EXTERNAL_URL || process.env.FRONTEND_URL || "").trim();
+  if (configured) return configured.replace(/\/$/, "");
+
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const hostValue = Array.isArray(forwardedHost)
+    ? forwardedHost[0]
+    : (forwardedHost || req.headers.host || "");
+  const host = String(hostValue).split(",")[0].trim();
+  if (!host) return "";
+
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const protoValue = Array.isArray(forwardedProto)
+    ? forwardedProto[0]
+    : (forwardedProto || "https");
+  const proto = String(protoValue).split(",")[0].trim() || "https";
+  return `${proto}://${host}`;
+}
+
 function validatePassword(password) {
   const errors = [];
   if (password.length < 8) errors.push("at least 8 characters");
@@ -110,7 +129,7 @@ router.post("/signup", async (req, res) => {
     );
 
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      const verifyUrl = `${process.env.FRONTEND_URL || "http://localhost:5000"}/api/auth/verify-email?token=${token}`;
+      const verifyUrl = `${getPublicBaseUrl(req)}/api/auth/verify-email?token=${token}`;
       const transporter = getTransporter();
       await transporter.sendMail({
         from: `"eUdyaan" <${process.env.EMAIL_USER}>`,
@@ -153,7 +172,7 @@ router.post("/resend-verification", async (req, res) => {
       pending.expiresAt = expiresAt;
       await pending.save();
 
-      const verifyUrl = `${process.env.FRONTEND_URL || "http://localhost:5000"}/api/auth/verify-email?token=${token}`;
+      const verifyUrl = `${getPublicBaseUrl(req)}/api/auth/verify-email?token=${token}`;
       const transporter = getTransporter();
       await transporter.sendMail({
         from: `"eUdyaan" <${process.env.EMAIL_USER}>`,
@@ -281,7 +300,7 @@ router.post("/forgot-password", async (req, res) => {
     );
 
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5000"}/reset-password.html?token=${token}`;
+      const resetUrl = `${getPublicBaseUrl(req)}/reset-password.html?token=${token}`;
       const transporter = getTransporter();
       await transporter.sendMail({
         from: `"eUdyaan" <${process.env.EMAIL_USER}>`,
