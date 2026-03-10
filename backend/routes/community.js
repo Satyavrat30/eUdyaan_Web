@@ -117,9 +117,11 @@ function addReplyToTree(replies, parentReplyId, newReply) {
 router.get("/posts", async (req, res) => {
   try {
     const { sort = "recent", category = "all", days = "all", tag = "all" } = req.query;
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
-    const skip = (page - 1) * limit;
+    const requestedLimit = String(req.query.limit || "").trim().toLowerCase();
+    const returnAll = requestedLimit === "all";
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = returnAll ? 0 : Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const skip = returnAll ? 0 : (page - 1) * limit;
 
     // Resolve voter key from session token if provided
     const authHeader = String(req.headers.authorization || "").trim();
@@ -146,13 +148,23 @@ router.get("/posts", async (req, res) => {
 
     const dbSort = sort === "popular" ? { likes: -1, createdAt: -1 } : { createdAt: -1 };
     const total = await CommunityPost.countDocuments(query);
-    const docs = await CommunityPost.find(query).sort(dbSort).skip(skip).limit(limit).lean();
+
+    // Optional unlimited mode for clients that need full history in one response.
+    let docsQuery = CommunityPost.find(query).sort(dbSort);
+    if (!returnAll) {
+      docsQuery = docsQuery.skip(skip).limit(limit);
+    }
+    const docs = await docsQuery.lean();
     let posts = docs.map((doc) => mapPost(doc, voterKey));
 
     if (category !== "all") posts = posts.filter((p) => p.category === category);
     if (sort === "replied") posts.sort((a, b) => b.replyCount - a.replyCount);
 
-    return res.json({ success: true, posts, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+    const pagination = returnAll
+      ? { page: 1, limit: posts.length, total: posts.length, pages: posts.length ? 1 : 0, mode: "all" }
+      : { page, limit, total, pages: Math.ceil(total / limit) };
+
+    return res.json({ success: true, posts, pagination });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

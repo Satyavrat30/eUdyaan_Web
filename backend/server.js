@@ -1,4 +1,5 @@
 const path = require("path");
+const dns = require("node:dns");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const mongoose = require("mongoose");
@@ -24,6 +25,24 @@ const aiRiskAlertBuckets = new Map();
 const aiRateMaxKeys = 5000;
 let aiSupportLastCleanupAt = 0;
 let aiRiskAlertLastCleanupAt = 0;
+
+function configureCustomDnsServers() {
+    const customServers = String(process.env.DNS_SERVERS || "")
+        .split(",")
+        .map((server) => server.trim())
+        .filter(Boolean);
+
+    if (!customServers.length) return;
+
+    try {
+        dns.setServers(customServers);
+        console.log(`Using custom DNS servers: ${customServers.join(", ")}`);
+    } catch (error) {
+        console.warn(`Invalid DNS_SERVERS value. Falling back to system DNS. ${error.message}`);
+    }
+}
+
+configureCustomDnsServers();
 
 const LANGUAGE_INSTRUCTIONS = {
     english: "Respond in English.",
@@ -385,9 +404,14 @@ app.get("/", (req, res) => { res.sendFile(path.join(__dirname, "../frontend", "i
 
 if (!process.env.MONGO_URI) { console.error("Missing MONGO_URI in backend/.env"); process.exit(1); }
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 })
     .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.log(err));
+    .catch((err) => {
+        console.log(err);
+        if (String(process.env.MONGO_URI || "").startsWith("mongodb+srv://")) {
+            console.error("MongoDB DNS SRV lookup failed. Set DNS_SERVERS=8.8.8.8,1.1.1.1 in backend/.env if your local DNS blocks SRV queries.");
+        }
+    });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
