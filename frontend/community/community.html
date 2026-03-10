@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="navbar">
-  <div class="logo"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</div>
+  <a class="logo" href="../index.html" aria-label="Go to home"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</a>
   <nav>
     <a href="../index.html">Home</a>
     <a href="../resources/resources.html">Resources</a>
@@ -33,16 +33,16 @@
     <section class="create-box" aria-label="Create post section">
       <button id="createPrompt" class="create-prompt" type="button" aria-expanded="false">Start a post...</button>
       <form id="createForm" class="create-form hidden" novalidate>
-        <label for="postTitle">Title</label>
+        <label for="postTitle">Title <span class="required-mark" aria-hidden="true">*</span></label>
         <input id="postTitle" type="text" maxlength="90" placeholder="Give your post a short title" required>
 
-        <label for="postContent">Content</label>
+        <label for="postContent">Content <span class="required-mark" aria-hidden="true">*</span></label>
         <textarea id="postContent" maxlength="1200" placeholder="Share your thoughts in 2-4 short paragraphs" required></textarea>
 
         <div class="create-grid">
           <div>
-            <label for="postTags">Tags (comma separated)</label>
-            <input id="postTags" type="text" placeholder="anxiety, exam, sleep">
+            <label for="postTags">Tags (comma separated) <span class="required-mark" aria-hidden="true">*</span></label>
+            <input id="postTags" type="text" placeholder="anxiety, exam, sleep" required>
           </div>
           <div>
             <label for="postMedia">Optional media</label>
@@ -126,6 +126,13 @@
   <article class="drawer-content">
     <p id="drawerBody"></p>
     <div class="drawer-stats" id="drawerStats"></div>
+    <div class="drawer-actions">
+      <div class="vote-controls" aria-label="Post vote controls">
+        <button id="voteUpBtn" type="button" class="vote-arrow" aria-label="Upvote">▲</button>
+        <span id="voteScore" class="vote-score">0</span>
+        <button id="voteDownBtn" type="button" class="vote-arrow" aria-label="Downvote">▼</button>
+      </div>
+    </div>
   </article>
 
   <section class="thread-section" aria-label="Threaded replies">
@@ -145,6 +152,18 @@
     </div>
   </form>
 </aside>
+
+<div id="redAlertModal" class="red-alert-modal hidden" role="dialog" aria-modal="true" aria-labelledby="redAlertTitle">
+  <div class="red-alert-panel">
+    <h3 id="redAlertTitle">RED ALERT TRIGGERED</h3>
+    <p id="redAlertText">This content may indicate immediate self-harm risk. Posting has been blocked for safety.</p>
+    <div class="red-alert-actions">
+      <a id="redAlertCall" class="primary-btn" href="tel:9152987821">Call Helpline</a>
+      <a id="redAlertConsult" class="ghost-btn" href="../appointment/appointment.html">Consult Doctor</a>
+      <button id="redAlertClose" type="button" class="ghost-btn">Close</button>
+    </div>
+  </div>
+</div>
 
 <script src="../session.js"></script>
 <script src="community.js"></script>

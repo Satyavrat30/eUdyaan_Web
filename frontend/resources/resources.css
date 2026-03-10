@@ -19,6 +19,7 @@
   font-size: 22px;
   font-weight: 600;
   color: #1f2937;
+  text-decoration: none;
 }
 
 .logo img {
@@ -94,6 +95,27 @@ nav .active {
   margin-top: 0;
 }
 
+.assistant-language {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.assistant-language label {
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.assistant-language select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #1f2937;
+}
+
 .mood-quick {
   display: flex;
   flex-wrap: wrap;
@@ -120,6 +142,12 @@ nav .active {
   margin-bottom: 12px;
 }
 
+.assistant-status {
+  margin: -4px 0 10px;
+  color: #475569;
+  font-size: 13px;
+}
+
 .msg {
   max-width: 90%;
   margin: 8px 0;
@@ -139,10 +167,37 @@ nav .active {
   background: #e9f5ee;
 }
 
+.msg.typing {
+  color: #475569;
+  background: #f1f5f9;
+  font-style: italic;
+}
+
 .msg.critical {
   background: #fee2e2;
   border: 1px solid #ef4444;
   color: #7f1d1d;
+}
+
+.alert-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.alert-btn {
+  text-decoration: none;
+  background: #b91c1c;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.alert-btn.secondary {
+  background: #1f2937;
 }
 
 .assistant-form {
@@ -164,6 +219,15 @@ nav .active {
   background: #5c6f5b;
   color: #fff;
   cursor: pointer;
+}
+
+.assistant-form button:disabled,
+.assistant-actions button:disabled,
+.mood-quick button:disabled,
+.assistant-form input:disabled,
+.assistant-language select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .assistant-actions {

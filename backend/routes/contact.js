@@ -1,9 +1,15 @@
 const express = require("express");
 const ContactMessage = require("../models/ContactMessage");
+const { requireUserSession } = require("../utils/userAuth");  // Fix #2
 
 const router = express.Router();
 
-router.post("/messages", async (req, res) => {
+// Fix #10: Strip HTML to prevent XSS stored in messages
+function sanitizeText(value) {
+  return String(value || "").replace(/<[^>]*>/g, "").trim();
+}
+
+router.post("/messages", requireUserSession, async (req, res) => {
   try {
     const { firstName, lastName, email, phone = "", message } = req.body;
 
@@ -12,18 +18,14 @@ router.post("/messages", async (req, res) => {
     }
 
     const doc = await ContactMessage.create({
-      firstName: String(firstName).trim(),
-      lastName: String(lastName).trim(),
-      email: String(email).trim(),
-      phone: String(phone).trim(),
-      message: String(message).trim()
+      firstName: sanitizeText(firstName),
+      lastName: sanitizeText(lastName),
+      email: sanitizeText(email),
+      phone: sanitizeText(phone),
+      message: sanitizeText(message)
     });
 
-    return res.status(201).json({
-      success: true,
-      message: "Message received",
-      id: String(doc._id)
-    });
+    return res.status(201).json({ success: true, message: "Message received", id: String(doc._id) });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

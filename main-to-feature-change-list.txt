@@ -1,0 +1,133 @@
+﻿COMMITS (main..feature/community-post-fixes)
+fc6cfd1 Fix community post validation and reply submit behavior
+69a6681 Add comprehensive project change and setup README
+1b08a20 Add remaining auth, setup, and UI updates
+159d2bc Sanitize env example for GitHub
+291ef16 feat: improve community voting, AI handling, UX polish, and docs
+1e3e9c2 feat: enforce login-gated features and appointment flow checks
+9ded87c docs: update README and appointment guidance text
+8970391 docs: update README with crisis safety and chatbot language behavior
+a032df7 feat: sync full project updates
+
+SUMMARY
+ 118 files changed, 22278 insertions(+), 219 deletions(-)
+
+NAME-STATUS (A/M/D)
+A	README.md
+A	backend/.env.example
+A	backend/models/Appointment.js
+M	backend/models/CommunityPost.js
+M	backend/models/User.js
+M	backend/node_modules/.package-lock.json
+A	backend/node_modules/bcryptjs/.npmignore
+A	backend/node_modules/bcryptjs/.travis.yml
+A	backend/node_modules/bcryptjs/.vscode/settings.json
+A	backend/node_modules/bcryptjs/LICENSE
+A	backend/node_modules/bcryptjs/README.md
+A	backend/node_modules/bcryptjs/bin/bcrypt
+A	backend/node_modules/bcryptjs/bower.json
+A	backend/node_modules/bcryptjs/dist/README.md
+A	backend/node_modules/bcryptjs/dist/bcrypt.js
+A	backend/node_modules/bcryptjs/dist/bcrypt.min.js
+A	backend/node_modules/bcryptjs/dist/bcrypt.min.js.gz
+A	backend/node_modules/bcryptjs/dist/bcrypt.min.map
+A	backend/node_modules/bcryptjs/externs/bcrypt.js
+A	backend/node_modules/bcryptjs/externs/minimal-env.js
+A	backend/node_modules/bcryptjs/index.js
+A	backend/node_modules/bcryptjs/package.json
+A	backend/node_modules/bcryptjs/scripts/build.js
+A	backend/node_modules/bcryptjs/src/bcrypt.js
+A	backend/node_modules/bcryptjs/src/bcrypt/impl.js
+A	backend/node_modules/bcryptjs/src/bcrypt/prng/README.md
+A	backend/node_modules/bcryptjs/src/bcrypt/prng/accum.js
+A	backend/node_modules/bcryptjs/src/bcrypt/prng/isaac.js
+A	backend/node_modules/bcryptjs/src/bcrypt/util.js
+A	backend/node_modules/bcryptjs/src/bcrypt/util/base64.js
+A	backend/node_modules/bcryptjs/src/bower.json
+A	backend/node_modules/bcryptjs/src/wrap.js
+A	backend/node_modules/bcryptjs/tests/quickbrown.txt
+A	backend/node_modules/bcryptjs/tests/suite.js
+A	backend/node_modules/nodemailer/.gitattributes
+A	backend/node_modules/nodemailer/.ncurc.js
+A	backend/node_modules/nodemailer/.prettierignore
+A	backend/node_modules/nodemailer/.prettierrc
+A	backend/node_modules/nodemailer/.prettierrc.js
+A	backend/node_modules/nodemailer/.release-please-config.json
+A	backend/node_modules/nodemailer/CHANGELOG.md
+A	backend/node_modules/nodemailer/CODE_OF_CONDUCT.md
+A	backend/node_modules/nodemailer/LICENSE
+A	backend/node_modules/nodemailer/README.md
+A	backend/node_modules/nodemailer/SECURITY.txt
+A	backend/node_modules/nodemailer/eslint.config.js
+A	backend/node_modules/nodemailer/lib/addressparser/index.js
+A	backend/node_modules/nodemailer/lib/base64/index.js
+A	backend/node_modules/nodemailer/lib/dkim/index.js
+A	backend/node_modules/nodemailer/lib/dkim/message-parser.js
+A	backend/node_modules/nodemailer/lib/dkim/relaxed-body.js
+A	backend/node_modules/nodemailer/lib/dkim/sign.js
+A	backend/node_modules/nodemailer/lib/errors.js
+A	backend/node_modules/nodemailer/lib/fetch/cookies.js
+A	backend/node_modules/nodemailer/lib/fetch/index.js
+A	backend/node_modules/nodemailer/lib/json-transport/index.js
+A	backend/node_modules/nodemailer/lib/mail-composer/index.js
+A	backend/node_modules/nodemailer/lib/mailer/index.js
+A	backend/node_modules/nodemailer/lib/mailer/mail-message.js
+A	backend/node_modules/nodemailer/lib/mime-funcs/index.js
+A	backend/node_modules/nodemailer/lib/mime-funcs/mime-types.js
+A	backend/node_modules/nodemailer/lib/mime-node/index.js
+A	backend/node_modules/nodemailer/lib/mime-node/last-newline.js
+A	backend/node_modules/nodemailer/lib/mime-node/le-unix.js
+A	backend/node_modules/nodemailer/lib/mime-node/le-windows.js
+A	backend/node_modules/nodemailer/lib/nodemailer.js
+A	backend/node_modules/nodemailer/lib/punycode/index.js
+A	backend/node_modules/nodemailer/lib/qp/index.js
+A	backend/node_modules/nodemailer/lib/sendmail-transport/index.js
+A	backend/node_modules/nodemailer/lib/ses-transport/index.js
+A	backend/node_modules/nodemailer/lib/shared/index.js
+A	backend/node_modules/nodemailer/lib/smtp-connection/data-stream.js
+A	backend/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js
+A	backend/node_modules/nodemailer/lib/smtp-connection/index.js
+A	backend/node_modules/nodemailer/lib/smtp-pool/index.js
+A	backend/node_modules/nodemailer/lib/smtp-pool/pool-resource.js
+A	backend/node_modules/nodemailer/lib/smtp-transport/index.js
+A	backend/node_modules/nodemailer/lib/stream-transport/index.js
+A	backend/node_modules/nodemailer/lib/well-known/index.js
+A	backend/node_modules/nodemailer/lib/well-known/services.json
+A	backend/node_modules/nodemailer/lib/xoauth2/index.js
+A	backend/node_modules/nodemailer/package.json
+M	backend/package-lock.json
+M	backend/package.json
+A	backend/routes/appointments.js
+M	backend/routes/auth.js
+M	backend/routes/community.js
+M	backend/routes/contact.js
+A	backend/scripts/risk-signal-matrix.js
+M	backend/server.js
+A	backend/utils/riskSignals.js
+M	frontend/about/about.css
+M	frontend/about/about.html
+M	frontend/appointment/appointment.css
+M	frontend/appointment/appointment.html
+M	frontend/appointment/appointment.js
+A	frontend/appointment/my-appointments.css
+A	frontend/appointment/my-appointments.html
+A	frontend/appointment/my-appointments.js
+M	frontend/auth.js
+M	frontend/community/community.css
+M	frontend/community/community.html
+M	frontend/community/community.js
+M	frontend/contact/contact.css
+M	frontend/contact/contact.html
+M	frontend/contact/contact.js
+A	frontend/forgot-password.html
+M	frontend/index.html
+M	frontend/login.html
+A	frontend/reset-password.html
+M	frontend/resources/resources.css
+M	frontend/resources/resources.html
+M	frontend/resources/resources.js
+M	frontend/session.js
+M	frontend/signup.html
+M	frontend/style.css
+A	package-lock.json
+M	package.json

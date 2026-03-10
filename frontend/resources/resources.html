@@ -9,7 +9,7 @@
 <body>
 
 <header class="navbar">
-  <div class="logo"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</div>
+  <a class="logo" href="../index.html" aria-label="Go to home"><img src="../images/Photo 8.jpeg" alt="">eUdyaan</a>
 
   <nav>
     <a href="../index.html">Home</a>
@@ -40,6 +40,25 @@
     <p class="assistant-subtitle">
       Talk with AI about college stress, anxiety, depression, relationship pressure, burnout, and study-life balance.
     </p>
+    <div class="assistant-language">
+      <label for="assistant-language">Language</label>
+      <select id="assistant-language" aria-label="Choose assistant language">
+        <option value="english">English</option>
+        <option value="hindi">Hindi (हिन्दी)</option>
+        <option value="bengali">Bengali (বাংলা)</option>
+        <option value="telugu">Telugu (తెలుగు)</option>
+        <option value="marathi">Marathi (मराठी)</option>
+        <option value="tamil">Tamil (தமிழ்)</option>
+        <option value="urdu">Urdu (اردو)</option>
+        <option value="gujarati">Gujarati (ગુજરાતી)</option>
+        <option value="kannada">Kannada (ಕನ್ನಡ)</option>
+        <option value="malayalam">Malayalam (മലയാളം)</option>
+        <option value="odia">Odia (ଓଡ଼ିଆ)</option>
+        <option value="punjabi">Punjabi (ਪੰਜਾਬੀ)</option>
+        <option value="assamese">Assamese (অসমীয়া)</option>
+        <option value="hinglish">Hinglish</option>
+      </select>
+    </div>
     <div class="mood-quick" id="mood-quick">
       <button type="button" data-mood="happy">Happy</button>
       <button type="button" data-mood="sad">Sad</button>
@@ -48,6 +67,7 @@
       <button type="button" data-mood="confused">Confused</button>
     </div>
     <div class="assistant-chat" id="assistant-chat"></div>
+    <p class="assistant-status hidden" id="assistant-status" aria-live="polite"></p>
     <form class="assistant-form" id="assistant-form">
       <input id="assistant-input" type="text" placeholder="Type your concern..." required>
       <button type="submit">Ask AI</button>
@@ -55,6 +75,7 @@
     <div class="assistant-actions">
       <button type="button" id="report-btn">Generate Report</button>
       <button type="button" id="download-report-btn">Download Report</button>
+      <button type="button" id="download-report-json-btn">Download JSON</button>
       <button type="button" id="clear-chat-btn" class="danger-btn">Clear Chat</button>
     </div>
     <pre class="report-view hidden" id="report-view"></pre>

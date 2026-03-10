@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login - eUdyaan</title>
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <a href="../index.html" class="muted">← Back to Home</a>
+      <h2 style="margin:10px 0 4px; color:#3a5a40;">Admin Login</h2>
+      <p class="muted">Use admin email and password configured on server.</p>
+
+      <div class="field">
+        <label for="adminEmail">Email</label>
+        <input id="adminEmail" type="email" placeholder="admin@eudyaan.local" />
+      </div>
+
+      <div class="field">
+        <label for="adminPassword">Password</label>
+        <input id="adminPassword" type="password" placeholder="Enter admin password" />
+      </div>
+
+      <button id="adminLoginBtn" class="admin-btn" style="width:100%;">Login</button>
+      <div id="adminLoginError" class="error-text"></div>
+    </div>
+  </div>
+
+  <script src="./admin-login.js"></script>
+</body>
+</html>
